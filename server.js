@@ -15,8 +15,8 @@ const bodyParser = require('body-parser');
 const cookieSession = require('cookie-session');
 
 // our modules loaded from cwd
-const { Connection } = require('../../connection');
-const cs304 = require('../../cs304');
+const { Connection } = require('./connection');
+const cs304 = require('./cs304');
 
 // create and configure the app
 const app = express();
