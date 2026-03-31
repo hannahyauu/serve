@@ -4,7 +4,8 @@
 // --------------------------------------------------------------------------------
 
 // pasted from lookup assignment
-// standard modules, loaded from node_modules
+// standard modules, loaded from node_modulesconst path = require('path');
+const fs = require('fs');
 const path = require('path');
 require("dotenv").config({ path: path.join(process.env.HOME, '.cs304env')});
 const express = require('express');
@@ -14,8 +15,8 @@ const bodyParser = require('body-parser');
 const cookieSession = require('cookie-session');
 
 // our modules loaded from cwd
-const { Connection } = require('./connection');
-const cs304 = require('./cs304');
+const { Connection } = require('../../connection');
+const cs304 = require('../../cs304');
 
 // create and configure the app
 const app = express();
@@ -36,3 +37,30 @@ app.set('view engine', 'ejs');
 const mongoUri = cs304.getMongoUri();
 
 // --------------------------------------------------------------------------------
+
+
+// main page. just has links to two other pages
+app.get('/', (req, res) => {
+    return res.render('index.ejs');
+});
+
+app.get('/recipes/', (req, res) => {
+    return res.render('index.ejs');
+});
+
+app.get('/recipes/:ingredients', (req, res) => {
+    return res.render('index.ejs');
+});
+
+const serverPort = cs304.getPort(8080);
+
+
+// --------------------------------------------------------------------------------
+
+// this is last, because it never returns
+app.listen(serverPort, function() {
+    console.log(`listening on ${serverPort}`);
+    console.log(`visit http://cs.wellesley.edu:${serverPort}/`);
+    console.log(`or http://localhost:${serverPort}/`);
+    console.log('^C to exit');
+});
