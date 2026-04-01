@@ -1,6 +1,7 @@
 // Initializes or refreshes the recipes collection in serve without creating duplicates.
 const path = require('path');
 const fs = require('fs');
+app.use(express.static('public'));
 require("dotenv").config({ path: path.join(process.env.HOME, '.cs304env')});
 const { Connection } = require('./connection');
 const cs304 = require('./cs304');

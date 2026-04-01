@@ -45,7 +45,7 @@ app.get('/', (req, res) => {
 });
 
 app.get('/recipes/', (req, res) => {
-    return res.render('index.ejs');
+    return res.render('recipes.ejs');
 });
 
 app.get('/recipes/:ingredients', (req, res) => {
