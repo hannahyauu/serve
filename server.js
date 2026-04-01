@@ -1,6 +1,5 @@
 // --------------------------------------------------------------------------------
 // serve(r)
-// idk how much of this we actually need i just wanted to test push something!
 // --------------------------------------------------------------------------------
 
 // pasted from lookup assignment
@@ -38,12 +37,12 @@ const mongoUri = cs304.getMongoUri();
 
 // --------------------------------------------------------------------------------
 
-
 // main page. just has links to two other pages
 app.get('/', (req, res) => {
     return res.render('index.ejs');
 });
 
+// recipe pages
 app.get('/recipes/', (req, res) => {
     return res.render('recipes.ejs');
 });
@@ -52,8 +51,18 @@ app.get('/recipes/:ingredients', (req, res) => {
     return res.render('index.ejs');
 });
 
-const serverPort = cs304.getPort(8080);
+// inventory pages
+const storageLocations = ['fridge', 'freezer', 'pantry'];
+const testIngredients = [{name: "apple", image: "apple.jpeg", expiration: "04-22-26", type: "fruit", amount: 2},
+                         {name: "pear", image: "pear.jpeg", expiration: "04-12-26", type: "fruit", amount: 5},
+                         {name: "eggs", image: "eggs.jpeg", expiration: "04-30-26", type: "poultry", amount: 12}
+                        ];
 
+app.get('/inventory', (req, res) => {
+    return res.render('inventory.ejs', {locations: storageLocations, ingredients: testIngredients});
+});
+
+const serverPort = cs304.getPort(8080);
 
 // --------------------------------------------------------------------------------
 

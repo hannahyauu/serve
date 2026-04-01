@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>serve</title>
+    <!-- load local stylesheet (css) -->
+    <link rel="stylesheet" href="/styles.css" />
+    <!-- loading jquery -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&display=swap" rel="stylesheet">
+</head>
+
+<body class="inventory">
+<h1>SERVE</h1>
+
+<!-- ADD NAV BAR -->
+
+
+<!-- location select -->
+<form method="GET">
+    <p><label>
+        <select required name="location">
+            <% locations.forEach( (location, index) => { %>
+            <option value="<%= index %>"><%= location %></option>
+            <% }) %>
+        </select>
+    </label></p>
+</form>
+
+<!-- list of current ingredients -->
+<div class="shelf">
+    <% ingredients.forEach( (ingredient) => { %>
+    <span class="ingredient-container">
+        <h2><%= ingredient.name %></h2>
+        <p><%= ingredient.image %></p>
+        <p><b>expires:</b> <%= ingredient.expiration %></p>
+        <p><b>amount:</b> <%= ingredient.amount %></p>
+    </span>
+    <% }) %>   
+</div>
+
+<!-- load local js -->
+<script src="/main.js"></script>
+</body>
+</html>

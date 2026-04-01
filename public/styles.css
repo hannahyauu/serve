@@ -33,7 +33,6 @@
     padding: 20px;
     display: flex;
     justify-content: space-between;
-    
 }
 
 #recipe-search {
@@ -67,4 +66,33 @@
     height: 50px;
     font-size: 18px;
 
+}
+
+.index {
+    background-color: #ABBADE;
+    font-family: 'Lato'
+}
+
+/* inventory styling */
+.inventory {
+    background-color: #ABBADE;
+    font-family: 'Lato'
+}
+
+.shelf {
+    background-color: #DBE2F3;
+    font-family: 'Lato';
+    border-radius: 20px;
+    padding: 20px;
+    display: flex;
+}
+
+.ingredient-container {
+    padding: 20px;
+    margin: 10px;
+    box-shadow: 0 4px 10px 0 rgba(0,0,0,0.2);
+    transition: 0.3s;
+    width: 20%;
+    border-radius: 50px;
+    background-color: white;
 }
