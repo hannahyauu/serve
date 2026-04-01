@@ -49,19 +49,12 @@ app.get('/', (req, res) => {
 });
 
 // recipe pages
-<<<<<<< HEAD
 app.get('/recipes/', async (req, res) => {
     const recipes = await getAllRecipes();
     // console.log(recipes);
     // let recipes = 
     return res.render('recipes.ejs',
                         {recipes: recipes});
-=======
-app.get('/recipes/', (req, res) => {
-    // hello
-    console.log("hi");
-    return res.render('recipes.ejs');
->>>>>>> 9df207cc80c91185eaeabc828f9b87f6d688daca
 });
 
 app.get('/recipes/:ingredients', (req, res) => {

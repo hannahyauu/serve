@@ -15,6 +15,8 @@
 
 <h1>SERVE</h1>
 
+<!-- FOOD IMAGES AT THIS PATH: data/food-ingredients-and-recipe-dataset-with-images/versions/1/food-images/Food\ Images/ -->
+
 <!-- ADD NAV BAR -->
 
 <!-- ADD SEARCH BAR  -->
@@ -37,11 +39,15 @@
 </span> -->
 
 <div class="card-container">
-    <span class="recipeCard">
-        <h1 class="recipe-text">Recipe Name</h1>
-        <p class="recipe-text">img</p>
-        <p class="recipe-text"> Directions</p>
-    </span>
+    
+    <% recipes.forEach( (recipe) => {  %>
+        <span class="recipeCard">
+            <h1 class="recipe-text"> <%= recipe.title %> </h1>
+            <p class="recipe-text"><%= recipe.imageName %> </p>
+            <!-- <p class="recipe-text"> <%= recipe.ingredients %> </p> -->
+            <p class="recipe-text"> <%= recipe.instructions %> </p>
+        </span>
+    <% }) %>
 </div>
 
     <!-- load local js -->
