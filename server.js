@@ -44,6 +44,8 @@ app.get('/', (req, res) => {
 
 // recipe pages
 app.get('/recipes/', (req, res) => {
+    // hello
+    console.log("hi");
     return res.render('recipes.ejs');
 });
 
