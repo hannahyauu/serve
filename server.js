@@ -35,6 +35,12 @@ app.set('view engine', 'ejs');
 
 const mongoUri = cs304.getMongoUri();
 
+// Gets all recipes in serve DB
+async function getAllRecipes() {
+    const db = await Connection.open(mongoUri, 'serve');
+    return db.collection('recipes').find({}).toArray();
+}
+
 // --------------------------------------------------------------------------------
 
 // main page. just has links to two other pages
@@ -43,12 +49,17 @@ app.get('/', (req, res) => {
 });
 
 // recipe pages
-app.get('/recipes/', (req, res) => {
-    return res.render('recipes.ejs');
+app.get('/recipes/', async (req, res) => {
+    const recipes = await getAllRecipes();
+    // console.log(recipes);
+    // let recipes = 
+    return res.render('recipes.ejs',
+                        {recipes: recipes});
 });
 
 app.get('/recipes/:ingredients', (req, res) => {
-    return res.render('index.ejs');
+    return res.render('recipes.ejs',
+                        {recipe: recipe});
 });
 
 // inventory pages
