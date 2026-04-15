@@ -46,19 +46,24 @@ async function getAllRecipes() {
 // Finds all ingredients with single ingredient in ingredient list
 async function recipesByIngredient(ingredient) {
     const recipes = await getAllRecipes();
-
     const filter = recipes.filter(recipe =>
         recipe.cleanedIngredients.map(item =>
             item.toLowerCase().includes(ingredient.toLowerCase())
         )
     );
-    // console.log(filter);
-    await Connection.close();
-
     return filter
     }
 
+async function getCurrentInventory(){
 
+}
+
+
+    // function filterRecipes() {
+    //     let input = document.getElementById('recipeSearch');
+    //     let filter = input.value.toLowerCase();
+    //     let ul = document.
+    // }
 // --------------------------------------------------------------------------------
 
 // main page. just has links to two other pages
@@ -66,46 +71,58 @@ app.get('/', (req, res) => {
     return res.render('index.ejs');
 });
 
+
 // recipe pages
 app.get('/recipes/', async (req, res) => {
+    const searchInput = req.query.searchInput;
     const recipes = await getAllRecipes();
-    // console.log(recipes);
-    // let recipes = 
-    return res.render('recipes.ejs',
-                        {recipes: recipes});
+
+    let filteredRecipes = recipes;
+
+    if (searchInput) {
+        const search = searchInput.toLowerCase();
+
+        filteredRecipes = recipes.filter(recipe => {
+            const title = (recipe.title || '').toLowerCase();
+
+            return recipe.cleanedIngredients.some(ingredient =>
+                ingredient.toLowerCase().includes(search)
+            ) || title.includes(search);
+        });
+    }
+
+    return res.render('recipes.ejs', { recipes: filteredRecipes });
 });
 
 
-// for search
+// // for search
 app.get('/recipes/:ingredients', async (req, res) => {
-    const ingredient = req.params.ingredients
-    const recipes = await getAllRecipes();
-    
-    const result = recipesByIngredient()
+    const ingredient = req.params.ingredients;
+    const result = recipesByIngredient(ingredient);
 
     return res.render('recipes.ejs',
-                        {recipe: recipe});
+                        {recipe: result});
 });
 
 // inventory pages
 const storageLocations = ['fridge', 'freezer', 'pantry'];
 const testIngredients = [{name: "apple", imgFile: "Apple.png", expiration: "04-22-26", type: "fruit", amount: 2},
-                        //  {name: "pear", image: "pear.jpeg", expiration: "04-12-26", type: "fruit", amount: 5},
-                        //  {name: "eggs", image: "eggs.jpeg", expiration: "04-30-26", type: "poultry", amount: 12}
+                         {name: "peach", imgFile: "Peach.png", expiration: "04-12-26", type: "fruit", amount: 5},
+                         {name: "eggs", imgFile: "Eggs.png", expiration: "04-30-26", type: "poultry", amount: 12}
                         ];
 
 app.get('/inventory', (req, res) => {
     return res.render('inventory.ejs', {locations: storageLocations, ingredients: testIngredients});
 });
 
-app.post('/recipes/:search', async (req, res) => {
-    const searchInput = req.params.search;
+// app.post('/recipes/:search', async (req, res) => {
+//     const searchInput = req.params.search;
 
-    const searchresults = recipesByIngredient(searchInput);
-    console.log(searchresults);
+//     const searchresults = recipesByIngredient(searchInput);
+//     console.log(searchresults);
     
-    return res.render('recipes.ejs');
-});
+//     return res.render('recipes.ejs');
+// });
 
 const serverPort = cs304.getPort(8080);
 

@@ -138,7 +138,7 @@ async function loadUpdateServeDBingredient() {
     // } else if (result.matchedCount === 1) {
     //   updated += 1;
     // }
-  };
+  // };
 
 //   console.log(`Inserted ${inserted} new recipes`);
 //   console.log(`Updated ${updated} existing recipes`);

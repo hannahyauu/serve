@@ -21,15 +21,14 @@
 
 <!-- ADD SEARCH BAR  -->
 <div class="search-container">
-    <span>
-        <form method="get" action="/recipes"> 
-            <input type="search" id="recipe-search" name="searchInput" placeholder="search for a recipe..." style="color: white; font-size: 20px; padding: 5px;" />
+        <form method="get" action="/recipes/"> 
+            <input type="search" 
+            id="recipe-search" 
+            name="searchInput" 
+            placeholder="search for a recipe..." 
+            style="color: white; font-size: 20px; padding: 5px;" />
+            <button class="filter-btn">filter</button>
         </form>
-    </span>
-    <span>
-        <button class="filter-btn">filter</button>
-    </span>
-</span>
 </div>
 
 
@@ -39,14 +38,17 @@
 </span> -->
 
 <div class="card-container">
-    
     <% recipes.slice(0,12).forEach( (recipe) => {  %>
         <span class="recipeCard">
             <h1 class="recipe-text"> <%= recipe.title %> </h1>
             <!-- <p class="recipe-text"><%= recipe.imageName %> </p> -->
              <img src = "/data/recipe-images/recipe-imgfiles/<%= recipe.imageName %>.jpg" alt="Image of <%= recipe.title %>">
             <!-- <p class="recipe-text"> <%= recipe.ingredients %> </p> -->
-            <p class="recipe-text"> <%= recipe.instructions %> </p>
+            <p><strong>Ingredients:</strong></p style="font-size: 20px;">
+            <ul class="recipe-text"> <% recipe.cleanedIngredients.forEach(ingredient =>{ %>
+                <li><%= ingredient %></li>
+            <% }) %> 
+            </ul>
         </span>
         
     <% }) %>
