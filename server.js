@@ -31,6 +31,7 @@ app.use(bodyParser.json());
 app.use(cs304.logRequestData);  // tell the user about any request data
 
 app.use(serveStatic('public'));
+app.use('/data', express.static('data'));
 app.set('view engine', 'ejs');
 
 const mongoUri = cs304.getMongoUri();
@@ -40,6 +41,23 @@ async function getAllRecipes() {
     const db = await Connection.open(mongoUri, 'serve');
     return db.collection('recipes').find({}).toArray();
 }
+
+
+// Finds all ingredients with single ingredient in ingredient list
+async function recipesByIngredient(ingredient) {
+    const recipes = await getAllRecipes();
+
+    const filter = recipes.filter(recipe =>
+        recipe.cleanedIngredients.map(item =>
+            item.toLowerCase().includes(ingredient.toLowerCase())
+        )
+    );
+    // console.log(filter);
+    await Connection.close();
+
+    return filter
+    }
+
 
 // --------------------------------------------------------------------------------
 
@@ -57,20 +75,36 @@ app.get('/recipes/', async (req, res) => {
                         {recipes: recipes});
 });
 
-app.get('/recipes/:ingredients', (req, res) => {
+
+// for search
+app.get('/recipes/:ingredients', async (req, res) => {
+    const ingredient = req.params.ingredients
+    const recipes = await getAllRecipes();
+    
+    const result = recipesByIngredient()
+
     return res.render('recipes.ejs',
                         {recipe: recipe});
 });
 
 // inventory pages
 const storageLocations = ['fridge', 'freezer', 'pantry'];
-const testIngredients = [{name: "apple", image: "apple.jpeg", expiration: "04-22-26", type: "fruit", amount: 2},
-                         {name: "pear", image: "pear.jpeg", expiration: "04-12-26", type: "fruit", amount: 5},
-                         {name: "eggs", image: "eggs.jpeg", expiration: "04-30-26", type: "poultry", amount: 12}
+const testIngredients = [{name: "apple", imgFile: "Apple.png", expiration: "04-22-26", type: "fruit", amount: 2},
+                        //  {name: "pear", image: "pear.jpeg", expiration: "04-12-26", type: "fruit", amount: 5},
+                        //  {name: "eggs", image: "eggs.jpeg", expiration: "04-30-26", type: "poultry", amount: 12}
                         ];
 
 app.get('/inventory', (req, res) => {
     return res.render('inventory.ejs', {locations: storageLocations, ingredients: testIngredients});
+});
+
+app.post('/recipes/:search', async (req, res) => {
+    const searchInput = req.params.search;
+
+    const searchresults = recipesByIngredient(searchInput);
+    console.log(searchresults);
+    
+    return res.render('recipes.ejs');
 });
 
 const serverPort = cs304.getPort(8080);

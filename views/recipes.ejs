@@ -22,8 +22,8 @@
 <!-- ADD SEARCH BAR  -->
 <div class="search-container">
     <span>
-        <form> 
-            <input type="search" id="recipe-search" placeholder="search for a recipe..." />
+        <form method="get" action="/recipes"> 
+            <input type="search" id="recipe-search" name="searchInput" placeholder="search for a recipe..." style="color: white; font-size: 20px; padding: 5px;" />
         </form>
     </span>
     <span>
@@ -40,13 +40,15 @@
 
 <div class="card-container">
     
-    <% recipes.forEach( (recipe) => {  %>
+    <% recipes.slice(0,12).forEach( (recipe) => {  %>
         <span class="recipeCard">
             <h1 class="recipe-text"> <%= recipe.title %> </h1>
-            <p class="recipe-text"><%= recipe.imageName %> </p>
+            <!-- <p class="recipe-text"><%= recipe.imageName %> </p> -->
+             <img src = "/data/recipe-images/recipe-imgfiles/<%= recipe.imageName %>.jpg" alt="Image of <%= recipe.title %>">
             <!-- <p class="recipe-text"> <%= recipe.ingredients %> </p> -->
             <p class="recipe-text"> <%= recipe.instructions %> </p>
         </span>
+        
     <% }) %>
 </div>
 
