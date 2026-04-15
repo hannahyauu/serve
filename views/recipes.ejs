@@ -12,8 +12,17 @@
     <link href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&display=swap" rel="stylesheet">
 </head>
 <body class="recipe" >
+    
+ <nav class="navbar">
+    <div class="logo">serve</div>
 
-<h1>SERVE</h1>
+    <div class="nav-links">
+        <a href="/recipes/" class="nav-btn">recipes</a>
+        <a href="/inventory" class="nav-btn">inventory</a>
+        <a href="/" class="profile-circle"></a>
+    </div>
+</nav>
+
 
 <!-- FOOD IMAGES AT THIS PATH: data/food-ingredients-and-recipe-dataset-with-images/versions/1/food-images/Food\ Images/ -->
 
@@ -38,7 +47,7 @@
 </span> -->
 
 <div class="card-container">
-    <% recipes.slice(0,12).forEach( (recipe) => {  %>
+    <% recipes.forEach( (recipe) => {  %>
         <span class="recipeCard">
             <h1 class="recipe-text"> <%= recipe.title %> </h1>
             <!-- <p class="recipe-text"><%= recipe.imageName %> </p> -->

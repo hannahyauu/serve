@@ -106,3 +106,52 @@
     border-radius: 50px;
     background-color: white;
 }
+
+
+.navbar {
+    background-color: #11153f;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 40px;
+    margin: 12px;
+}
+
+.logo {
+    font-family: 'Lato', sans-serif;
+    font-size: 54px;
+    font-weight: 900;
+    color: white;
+    letter-spacing: -2px;
+    text-shadow: 4px 4px 0px #9aa7cc;
+}
+
+.nav-links {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+}
+
+.nav-btn {
+    font-family: 'Lato', sans-serif;
+    font-size: 24px;
+    font-weight: 300;
+    color: white;
+    text-decoration: none;
+    background-color: #2b315d;
+    padding: 12px 28px;
+    border-radius: 14px;
+    letter-spacing: 3px;
+}
+
+.nav-btn:hover {
+    background-color: #394174;
+}
+
+.profile-circle {
+    width: 44px;
+    height: 44px;
+    background-color: #dce2ea;
+    border-radius: 50%;
+    display: inline-block;
+}
