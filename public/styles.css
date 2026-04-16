@@ -95,6 +95,8 @@
     border-radius: 20px;
     padding: 20px;
     display: flex;
+    align-items: center; /* THIS centers vertically */
+    gap: 20px;
 }
 
 .ingredient-container {
@@ -154,4 +156,10 @@
     background-color: #dce2ea;
     border-radius: 50%;
     display: inline-block;
+}
+
+.add-button {
+    border-radius: 50%;
+    width: 200px;
+    height: 200px;
 }

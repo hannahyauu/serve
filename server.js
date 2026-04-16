@@ -55,7 +55,7 @@ async function recipesByIngredient(ingredient) {
     }
 
 async function getCurrentInventory(){
-
+    // need to use cookies to get persons info and see what db they're connected to.
 }
 
 
