@@ -145,7 +145,7 @@ async function loadUpdateServeDBingredient() {
 
 //   // const one = await recipes.findOne();
 //   // console.log(one);
-// }
+}
 
 // Gets all recipes in serve DB
 async function getAllRecipes() {

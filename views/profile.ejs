@@ -7,7 +7,11 @@
     <link rel="stylesheet" href="/styles.css" />
     <!-- loading jquery -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&display=swap" rel="stylesheet">
 </head>
+
 <body class="page">
 
 <!-- navigation -->
@@ -16,13 +20,12 @@
 <!-- error flashing -->
 <%- include ("../partials/flashing.ejs") %>
 
-<!-- takes you to login page -->
-<h1><a href="/login/">login</a></h1>
+<h1>username/profile picture here</h1>
+<p>other information here</p>
 
-<!-- <ul>
-    <li>RECIPES: </li>
-    <li>INVENTORY: <a href="/inventory/">main inventory page</a></li>
-</ul> -->
+<form id="logout" action="/logout" method="POST">
+    <button type="submit">log out</button>
+</form>
 
 <!-- load local js -->
 <script src="/main.js"></script>

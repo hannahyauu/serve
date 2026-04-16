@@ -3,6 +3,10 @@
   src: url(sansation_light.woff);
 }
 
+body {
+    font-family: 'Lato', sans-serif;
+}
+
 /* Holds all recipecards */
 .card-container {
     display: grid;
@@ -23,20 +27,17 @@
     overflow: hidden;
     overflow-wrap: breakword;
     /* overflow-clip-margin: 40px; */
-
 }
 
 .recipe {
     background-color: #ABBADE;
     font-family: 'Lato';
-    
 }
 
 .recipe-text {
     font-size: 20px;
     padding: 20px;
     border: 20px;
-
 }
 
 .search-container {
@@ -75,7 +76,6 @@
     width: 250px;
     height: 50px;
     font-size: 18px;
-
 }
 
 .index {
@@ -83,10 +83,11 @@
     font-family: 'Lato'
 }
 
-/* inventory styling */
-.inventory {
+/* page styling */
+.page {
     background-color: #ABBADE;
-    font-family: 'Lato'
+    font-family: 'Lato', sans-serif;
+    margin: 22px;
 }
 
 .shelf {
@@ -116,7 +117,7 @@
     justify-content: space-between;
     align-items: center;
     padding: 20px 40px;
-    margin: 12px;
+    /* margin: 12px; */
 }
 
 .logo {
@@ -162,4 +163,18 @@
     border-radius: 50%;
     width: 200px;
     height: 200px;
+}
+
+.add-button:hover {
+    background-color: #9aa7cc;
+}
+
+#errors {
+    font-family: 'Lato', sans-serif;
+    color: rgb(180, 32, 32)
+}
+
+#info {
+    font-family: 'Lato', sans-serif;
+    color: rgb(88, 88, 150)
 }
