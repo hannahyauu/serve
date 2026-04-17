@@ -40,20 +40,38 @@
 </span> -->
 
 <div class="card-container">
-    <% recipes.forEach( (recipe) => {  %>
-        <span class="recipeCard">
-            <h1 class="recipe-text"> <%= recipe.title %> </h1>
-            <!-- <p class="recipe-text"><%= recipe.imageName %> </p> -->
-             <img src = "/data/recipe-images/recipe-imgfiles/<%= recipe.imageName %>.jpg" alt="Image of <%= recipe.title %>">
-            <!-- <p class="recipe-text"> <%= recipe.ingredients %> </p> -->
+    <% recipes.slice(0,50).forEach( (recipe) => {  %>
+    <a href="/recipes/<%= recipe.recipeID %>" class="recipe-link">
+    <div class="recipeCard">
+        <h1 class="recipe-text"> <%= recipe.title %> 
+            <form action="/save-recipe" method="POST">
+            <input type="hidden" name="recipeID" value="<%= recipe.recipeID %>">
+            <button type="submit" class="<%= savedRecipes.includes(recipe.recipeID) ? 'likedHeart' : 'unlikedHeart' %>">
+                &#9829;</button>
+        </form>
+        </h1> 
+            <img src = "/data/recipe-images/recipe-imgfiles/<%= recipe.imageName %>.jpg" alt="Image of <%= recipe.title %>">
             <p><strong>Ingredients:</strong></p style="font-size: 20px;">
             <ul class="recipe-text"> <% recipe.cleanedIngredients.forEach(ingredient =>{ %>
-                <li><%= ingredient %></li>
-            <% }) %> 
+            <li><%= ingredient %></li>
+        <% }) %> 
             </ul>
-        </span>  
+        </div>  
+    </a>
+        
     <% }) %>
 </div>
+
+<script>
+
+
+document.querySelectorAll('.unlikedHeart').forEach(button => {
+    button.addEventListener('click', function () {
+        this.classList.toggle('likedHeart');
+    });
+
+});
+</script>
 
 <!-- load local js -->
 <script src="/main.js"></script>

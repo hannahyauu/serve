@@ -73,11 +73,11 @@ async function getCurrentInventory(){
     // need to use cookies to get persons info and see what db they're connected to.
 }
 
-// function filterRecipes() {
-//     let input = document.getElementById('recipeSearch');
-//     let filter = input.value.toLowerCase();
-//     let ul = document.
-// }
+async function getSavedRecipes(){
+    const db = await Connection.open(mongoUri, 'serve');
+    const user = db.collections('user').find({});
+    console.log(user);
+}
 
 // ==========================================================================
 
@@ -105,28 +105,73 @@ app.get('/recipes/', async (req, res) => {
         });
     }
 
-    return res.render('recipes.ejs', { recipes: filteredRecipes });
+    const db = await Connection.open(mongoUri, 'serve');
+    const user = await db.collection('users').findOne({ username: req.session.username });
+
+
+    return res.render('recipes.ejs', { recipes: filteredRecipes,
+        savedRecipes: user.savedRecipes
+    });
 });
 
 // for search
-app.get('/recipes/:ingredients', async (req, res) => {
-    const ingredient = req.params.ingredients;
-    const result = recipesByIngredient(ingredient);
+app.get('/saved', async (req, res) => {
+    if (!req.session.username) {
+        req.flash('error', 'You are not logged in - please do so.');
+        return res.redirect("/");
+    }
 
-    return res.render('recipes.ejs',
-                        {recipe: result});
+    const db = await Connection.open(mongoUri, 'serve');
+    const user = await db.collection('users').findOne({username: req.session.username});
+    const savedRecipes = await db.collection('recipes').find({
+    recipeID: { $in: user.savedRecipes }
+    }).toArray();
+    
+    return res.render('recipes.ejs',{
+                        recipes: savedRecipes,
+                        savedRecipes: savedRecipes || []
+                    }
+    )
 });
 
-// app.post('/recipes/:search', async (req, res) => {
-//     const searchInput = req.params.search;
+// user saves recipes 
+app.post('/save-recipe', async (req, res) => {
+    const recipeID = parseInt(req.body.recipeID);
 
-//     const searchresults = recipesByIngredient(searchInput);
-//     console.log(searchresults);
-    
-//     return res.render('recipes.ejs');
-// });
+    const db = await Connection.open(mongoUri, 'serve');
+    const user = await db.collection('users').findOne({ username: req.session.username });
 
-// ==========================================================================
+    if (user.savedRecipes.includes(recipeID)) {
+        await db.collection('users').updateOne(
+            { username: req.session.username },
+            { $pull: { savedRecipes: recipeID } }
+        );
+    } else {
+        await db.collection('users').updateOne(
+            { username: req.session.username },
+            { $addToSet: { savedRecipes: recipeID } }
+        );
+    }
+
+    res.redirect('back');
+});
+
+// click on a specific recipe
+app.get('/recipes/:recipeID', async (req, res) => {
+    const recipeID = req.params.recipeID;
+    const db = await Connection.open(mongoUri, 'serve');
+    const recipe = await db.collection('recipes').findOne({recipeID: parseInt(recipeID)});
+
+    //render flashes later
+    if (recipe === null) {
+        req.flash('error', "There is no recipe with that recipe ID!");
+    }
+
+    return res.render('recipeSpecific.ejs',
+                        {recipeID,
+                            recipe
+                        });
+});
 
 // inventory pages
 const storageLocations = ['fridge', 'freezer', 'pantry'];
@@ -156,7 +201,7 @@ app.get('/profile', requiresLogin, (req, res) => {
         req.flash('error', 'You are not logged in - please do so.');
         return res.redirect("/");
     }
-    return res.render('profile.ejs', { username: req.session.username });
+    return res.render('profile.ejs', { username: req.session.username});
 });
 
 // password/login stuff
@@ -192,10 +237,12 @@ app.post('/signup', async (req, res) => {
         return res.redirect('/login');
         }
 
-        // otherwise insert a new user
+        // otherwise insert a new user with empty inventory and savedrecipes
         await db.collection(USERS).insertOne({
             username: username,
-            hash: hash
+            hash: hash,
+            inventory: [],
+            savedRecipes: [],
         });
 
         // on successful registration, create session with given username
@@ -254,6 +301,7 @@ app.post('/logout', (req, res) => {
         return res.redirect('/');
     }
 });
+
 
 // ==========================================================================
 

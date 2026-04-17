@@ -25,8 +25,21 @@ body {
     height: 500px;
     
     overflow: hidden;
-    overflow-wrap: breakword;
+    overflow-wrap: break-word;
     /* overflow-clip-margin: 40px; */
+}
+
+.unlikedHeart {
+    color: darkblue;
+}
+.likedHeart {
+    color: red;
+}
+
+.recipe-link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
 }
 
 .recipe {

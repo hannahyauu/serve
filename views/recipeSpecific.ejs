@@ -20,16 +20,16 @@
 <!-- error flashing -->
 <%- include ("../partials/flashing.ejs") %>
 
-<h1>username/profile picture here</h1>
-<p>other information here</p>
+<div class="recipe-text" style = "color: white; text-shadow: 15em;">
+    <h1> <%= recipe.title %> </h1> 
+    <img src = "/data/recipe-images/recipe-imgfiles/<%= recipe.imageName %>.jpg" alt="Image of <%= recipe.title %>">
+    <p><strong>Ingredients:</strong></p style="font-size: 20px;">
+    <ul> <% recipe.cleanedIngredients.forEach(ingredient =>{ %>
+        <li><%= ingredient %></li>
+        <% }) %> 
+    </ul>
+    <p> <%= recipe.instructions %> </p>
+</div>
 
-<p><a href="/saved" class="nav-btn">saved recipes</a></p> source ~/.cs304env.sh
-
-<form id="logout" action="/logout" method="POST">
-    <button type="submit">log out</button>
-</form>
-
-<!-- load local js -->
-<script src="/main.js"></script>
 </body>
 </html>
