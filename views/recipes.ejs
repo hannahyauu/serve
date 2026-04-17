@@ -13,35 +13,28 @@
 </head>
 <body class="recipe" >
     
- <nav class="navbar">
-    <div class="logo">serve</div>
+<!-- navigation -->
+<%- include("../partials/navbar.ejs") %>
 
-    <div class="nav-links">
-        <a href="/recipes/" class="nav-btn">recipes</a>
-        <a href="/inventory" class="nav-btn">inventory</a>
-        <a href="/" class="profile-circle"></a>
-    </div>
-</nav>
+<!-- error flashing -->
+<%- include ("../partials/flashing.ejs") %>
 
 
 <!-- FOOD IMAGES AT THIS PATH: data/food-ingredients-and-recipe-dataset-with-images/versions/1/food-images/Food\ Images/ -->
 
-<!-- ADD NAV BAR -->
-
-<!-- ADD SEARCH BAR  -->
+<!-- search bar -->
 <div class="search-container">
-        <form method="get" action="/recipes/"> 
-            <input type="search" 
-            id="recipe-search" 
-            name="searchInput" 
-            placeholder="search for a recipe..." 
-            style="color: white; font-size: 20px; padding: 5px;" />
-            <button class="filter-btn">filter</button>
-        </form>
+    <form method="get" action="/recipes/"> 
+        <input type="search" 
+        id="recipe-search" 
+        name="searchInput" 
+        placeholder="search for a recipe..." 
+        style="color: white; font-size: 20px; padding: 5px;" />
+        <button class="filter-btn">filter</button>
+    </form>
 </div>
 
 
-<!-- ADD FILTER OPTIONS -->
 <!-- <span id="filter">
     <button>filter</button>
 </span> -->
@@ -58,12 +51,11 @@
                 <li><%= ingredient %></li>
             <% }) %> 
             </ul>
-        </span>
-        
+        </span>  
     <% }) %>
 </div>
 
-    <!-- load local js -->
-    <script src="/main.js"></script>
+<!-- load local js -->
+<script src="/main.js"></script>
 </body>
 </html>

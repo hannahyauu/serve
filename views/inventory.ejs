@@ -12,19 +12,13 @@
     <link href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&display=swap" rel="stylesheet">
 </head>
 
-<body class="inventory">
+<body class="page">
 
-<!-- ADD NAV BAR -->
- <nav class="navbar">
-    <div class="logo">serve</div>
+<!-- navigation -->
+<%- include("../partials/navbar.ejs") %>
 
-    <div class="nav-links">
-        <a href="/recipes/" class="nav-btn">recipes</a>
-        <a href="/inventory" class="nav-btn">inventory</a>
-        <a href="/" class="profile-circle"></a>
-    </div>
-</nav>
-
+<!-- error flashing -->
+<%- include ("../partials/flashing.ejs") %>
 
 <!-- location select -->
 <form method="GET">
@@ -37,7 +31,6 @@
     </label></p>
 </form>
 
-
 <!-- list of current ingredients -->
 <div class="shelf">
     <% ingredients.forEach( (ingredient) => { %>
@@ -49,12 +42,58 @@
         <p><b>amount:</b> <%= ingredient.amount %></p>
     </span>
     <% }) %>   
-    <form>
-        <button class="add-button">+</button>
-    </form>
+    
+    <button id="add-ingredient" class="add-button">+</button>
+    <div class="form-popup" id="item-popup" style="display:none; position:fixed;">
+        <form id="ingredient-form" action="/add-item" method="POST">
+            <h1>enter item</h1>
+            <label>item name
+                <input type="text" name="item-name" placeholder="item name" required>
+            </label>
+            <label>image file (not functional yet)
+                <input type="text" name="imgFile" placeholder="image">
+            </label>
+            <label>expiration date
+                <input type="text" name="expiration" placeholder="expiration date">
+            </label>
+            <label>amount
+                <input type="text" name="amount" placeholder=1>
+            </label>
+            <button type="submit">submit</button>
+            <button type="button" onclick="closeForm()">close</button>
+        </form>
+    </div>
 </div>
 
 <!-- load local js -->
 <script src="/main.js"></script>
+
+<script>
+    // open/close ingredient form popup
+    function openForm() { 
+        let element = document.getElementById("item-popup");
+        element.style.display = "block";
+        element.style.backdropFilter = "grayscale(100%) blur(10px)";
+    };
+
+    function closeForm() { 
+        let element = document.getElementById("item-popup");
+        element.style.display = "none";
+    }
+    
+    let element = document.getElementById("add-ingredient");
+    
+    // open form if currently closed & vice versa
+    element.addEventListener("click", function () {
+        let current = document.getElementById("item-popup").style.display;
+        console.log(current);
+        if (current == "none") {
+            openForm();
+        } else {
+            closeForm();
+        }
+    });
+</script>
+
 </body>
 </html>

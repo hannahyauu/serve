@@ -136,9 +136,17 @@ const testIngredients = [{name: "apple", imgFile: "Apple.png", expiration: "04-2
                         ];
 
 // renders inventory page
-app.get('/inventory', requiresLogin, (req, res) => {
+app.get('/inventory/:location', requiresLogin, (req, res) => {
+    const location = req.params.location;
     return res.render('inventory.ejs', {locations: storageLocations, ingredients: testIngredients});
 });
+
+app.post('/add-item', requiresLogin, async (req, res) => {
+    const db = await Connection.open(mongoUri, 'serve');
+    // this isn't done lol 
+})
+
+
 
 // ==========================================================================
 
@@ -195,7 +203,7 @@ app.post('/signup', async (req, res) => {
         req.session.username = username;
         req.session.loggedIn = true;
         
-        return res.redirect('/inventory');
+        return res.redirect('/inventory/fridge');
     
     } catch (error) {
         req.flash('error', `form submission error: ${error}`);
@@ -226,7 +234,7 @@ app.post("/login", async (req, res) => {
         req.session.username = username;
         req.session.loggedIn = true;
 
-        return res.redirect('/inventory');
+        return res.redirect('/inventory/fridge');
     
     } catch (error) {
         req.flash('error', `form submission error: ${error}`);
