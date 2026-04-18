@@ -20,6 +20,7 @@
 <!-- error flashing -->
 <%- include ("../partials/flashing.ejs") %>
 
+<!-- render recipe title, ingredients, and complete instructions -->
 <div class="recipe-text" style = "color: white; text-shadow: 15em;">
     <h1> <%= recipe.title %> </h1> 
     <img src = "/data/recipe-images/recipe-imgfiles/<%= recipe.imageName %>.jpg" alt="Image of <%= recipe.title %>">

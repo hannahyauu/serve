@@ -31,18 +31,19 @@
     </label></p>
 </form>
 
-<!-- list of current ingredients -->
+<!-- render list of current ingredients in users inventory -->
 <div class="shelf">
     <% ingredients.forEach( (ingredient) => { %>
     <span class="ingredient-container">
         <img src = "/data/ingredient-images/<%= ingredient.imgFile %>" alt="Image of <%= ingredient.name %>" style="width: 50px">
         <h2><%= ingredient.name %></h2>
         <p><%= ingredient.image %></p>
-        <p><b>expires:</b> <%= ingredient.expiration %></p>
+        <!-- <p><b>expires:</b> <%= ingredient.expiration %></p> -->
         <p><b>amount:</b> <%= ingredient.amount %></p>
     </span>
     <% }) %>   
     
+<!-- button for user to add ingredients to their inventory  -->
     <button id="add-ingredient" class="add-button">+</button>
     <div class="form-popup" id="item-popup" style="display:none; position:fixed;">
         <form id="ingredient-form" action="/add-item" method="POST">

@@ -34,12 +34,9 @@
     </form>
 </div>
 
-
-<!-- <span id="filter">
-    <button>filter</button>
-</span> -->
-
+<!-- Recipe Card  -->
 <div class="card-container">
+    <!-- grab first 50 recipes just so can render faster, change later to limit() or somehow do multiple pages -->
     <% recipes.slice(0,50).forEach( (recipe) => {  %>
     <a href="/recipes/<%= recipe.recipeID %>" class="recipe-link">
     <div class="recipeCard">
@@ -49,6 +46,7 @@
             <button type="submit" class="<%= savedRecipes.includes(recipe.recipeID) ? 'likedHeart' : 'unlikedHeart' %>">
                 &#9829;</button>
         </form>
+        <!-- display recipe info  -->
         </h1> 
             <img src = "/data/recipe-images/recipe-imgfiles/<%= recipe.imageName %>.jpg" alt="Image of <%= recipe.title %>">
             <p><strong>Ingredients:</strong></p style="font-size: 20px;">
@@ -58,13 +56,12 @@
             </ul>
         </div>  
     </a>
-        
     <% }) %>
 </div>
 
 <script>
 
-
+// if click on heart button, turn to red for saved, vice versa.
 document.querySelectorAll('.unlikedHeart').forEach(button => {
     button.addEventListener('click', function () {
         this.classList.toggle('likedHeart');

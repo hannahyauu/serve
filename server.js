@@ -52,15 +52,14 @@ app.use(cookieSession({
 
 // ==========================================================================
 
-// Gets all recipes in serve DB
-async function getAllRecipes() {
-    const db = await Connection.open(mongoUri, 'serve');
-    return db.collection('recipes').find({}).toArray();
-}
-
-// Finds all ingredients with single ingredient in ingredient list
+/**
+ * Finds all ingredients with single ingredient in ingredient list
+ * @param {String} ingredient
+ * @returns list of recipe that contain ingredient
+ */
 async function recipesByIngredient(ingredient) {
-    const recipes = await getAllRecipes();
+    const db = await Connection.open(mongoUri, 'serve');
+    const recipes = db.collection('recipes').find({}).toArray();
     const filter = recipes.filter(recipe =>
         recipe.cleanedIngredients.map(item =>
             item.toLowerCase().includes(ingredient.toLowerCase())
@@ -69,14 +68,15 @@ async function recipesByIngredient(ingredient) {
     return filter
 }
 
+// for future use but get everything currently in this users inventory
 async function getCurrentInventory(){
     // need to use cookies to get persons info and see what db they're connected to.
 }
 
+// for future use but get everything currently in this users saved recipes
 async function getSavedRecipes(){
-    const db = await Connection.open(mongoUri, 'serve');
-    const user = db.collections('user').find({});
-    console.log(user);
+    // const db = await Connection.open(mongoUri, 'serve');
+    // const user = db.collections('user').find({});
 }
 
 // ==========================================================================
@@ -90,10 +90,13 @@ app.get('/', (req, res) => {
 app.get('/recipes/', async (req, res) => {
     const searchInput = req.query.searchInput;
     const recipes = await getAllRecipes();
-
+    
+    // rename for interpretability 
     let filteredRecipes = recipes;
 
+    // if someone searches something, filter recipe list
     if (searchInput) {
+        // grab search input 
         const search = searchInput.toLowerCase();
 
         filteredRecipes = recipes.filter(recipe => {
@@ -105,6 +108,8 @@ app.get('/recipes/', async (req, res) => {
         });
     }
 
+    // grab users username to retrieve saved recipes and pass to recipes page
+    // this will render red / grey hearts 
     const db = await Connection.open(mongoUri, 'serve');
     const user = await db.collection('users').findOne({ username: req.session.username });
 
@@ -116,17 +121,20 @@ app.get('/recipes/', async (req, res) => {
 
 // for search
 app.get('/saved', async (req, res) => {
+    // make sure user is logged in 
     if (!req.session.username) {
         req.flash('error', 'You are not logged in - please do so.');
         return res.redirect("/");
     }
 
+    // find that users saved recipes
     const db = await Connection.open(mongoUri, 'serve');
     const user = await db.collection('users').findOne({username: req.session.username});
     const savedRecipes = await db.collection('recipes').find({
     recipeID: { $in: user.savedRecipes }
     }).toArray();
     
+    // consider case user has no saved recipes
     return res.render('recipes.ejs',{
                         recipes: savedRecipes,
                         savedRecipes: savedRecipes || []
@@ -134,19 +142,19 @@ app.get('/saved', async (req, res) => {
     )
 });
 
-// user saves recipes 
+// user saves or unsaves recipes 
 app.post('/save-recipe', async (req, res) => {
     const recipeID = parseInt(req.body.recipeID);
-
     const db = await Connection.open(mongoUri, 'serve');
     const user = await db.collection('users').findOne({ username: req.session.username });
-
+    
+    // if user unsaving 
     if (user.savedRecipes.includes(recipeID)) {
         await db.collection('users').updateOne(
             { username: req.session.username },
             { $pull: { savedRecipes: recipeID } }
         );
-    } else {
+    } else { // if user saving
         await db.collection('users').updateOne(
             { username: req.session.username },
             { $addToSet: { savedRecipes: recipeID } }
@@ -156,7 +164,7 @@ app.post('/save-recipe', async (req, res) => {
     res.redirect('back');
 });
 
-// click on a specific recipe
+// loads a specific recipe after being clicked on
 app.get('/recipes/:recipeID', async (req, res) => {
     const recipeID = req.params.recipeID;
     const db = await Connection.open(mongoUri, 'serve');
@@ -174,6 +182,7 @@ app.get('/recipes/:recipeID', async (req, res) => {
 });
 
 // inventory pages
+// test ingredient items
 const storageLocations = ['fridge', 'freezer', 'pantry'];
 const testIngredients = [{name: "apple", imgFile: "Apple.png", expiration: "04-22-26", amount: 2},
                          {name: "peach", imgFile: "Peach.png", expiration: "04-12-26", amount: 5},
