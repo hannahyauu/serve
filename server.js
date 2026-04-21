@@ -112,6 +112,7 @@ function requiresLogin(req, res, next) {
 app.get('/', (req, res) => {
     let loggedIn;
     if (!req.session.loggedIn) { loggedIn = false } else { loggedIn = true };
+
     return res.render('index.ejs', { loggedIn: loggedIn });
 });
 
@@ -229,7 +230,25 @@ app.get('/inventory/:location', requiresLogin, async (req, res) => {
     let userDoc = await users.findOne({username: user});
     let inventory = userDoc?.inventory ?? [];
 
-    console.log(inventory);
+    // expiration date notifications
+    if (inventory != []) {
+        inventory.forEach(item => {
+            let currDate = new Date();
+            let expirDate = new Date(item.expiration);
+            let dayDiff = expirDate.getDate() - currDate.getDate() + 1;
+
+            // if current date is 3 days or less away from expiration date
+            let dateCompare = expirDate.getFullYear() === currDate.getFullYear() &&
+                 expirDate.getMonth() === currDate.getMonth() && dayDiff <= 3 && dayDiff >= 0;
+            
+            // flash expiration notifications
+            if ( dateCompare ) {
+                req.flash('expiration', `${item.itemName} is expiring in ${dayDiff} day(s)!`)
+            } else if ( dayDiff < 0 ) {
+                req.flash('expiration', `${item.itemName} is expired!`)
+            }
+        });
+    }
 
     return res.render('inventory.ejs', {locations: storageLocations, ingredients: inventory});
 });

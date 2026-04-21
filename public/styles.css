@@ -129,6 +129,7 @@ body {
     justify-content: space-between;
     align-items: center;
     padding: 20px 40px;
+    border-radius: 20px;
     /* margin: 12px; */
 }
 
@@ -182,14 +183,22 @@ body {
     background-color: #9aa7cc;
 }
 
-#errors {
+#info, #errors, #expiration {
     font-family: 'Lato', sans-serif;
-    color: rgb(180, 32, 32)
+    color: rgb(88, 88, 150);
 }
 
-#info {
-    font-family: 'Lato', sans-serif;
-    color: rgb(88, 88, 150)
+#errors {
+    color: rgb(180, 32, 32);
+}
+
+#expiration {
+    background-color: white;
+    color: rgb(241, 54, 16);
+    padding: 20px;
+    margin-top: 20px;
+    margin-bottom: 15px;
+    border-radius: 20px;
 }
 
 .overlay {
