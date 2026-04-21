@@ -53,6 +53,15 @@ app.use(cookieSession({
 // ==========================================================================
 
 /**
+ * Gets all recipes in serve DB
+ * @returns list of all recipe documents
+ */
+async function getAllRecipes() {
+    const db = await Connection.open(mongoUri, 'serve');
+    return db.collection('recipes').find({}).toArray();
+}
+
+/**
  * Finds all ingredients with single ingredient in ingredient list
  * @param {String} ingredient
  * @returns list of recipe that contain ingredient
@@ -68,9 +77,11 @@ async function recipesByIngredient(ingredient) {
     return filter
 }
 
-// for future use but get everything currently in this users inventory
-async function getCurrentInventory(){
-    // need to use cookies to get persons info and see what db they're connected to.
+/**
+ * For future use -- gets inventory of currently logged in user
+ * @returns list of ingredients in inventory
+ */
+async function getCurrentInventory() {
 }
 
 // for future use but get everything currently in this users saved recipes
@@ -79,12 +90,32 @@ async function getSavedRecipes(){
     // const user = db.collections('user').find({});
 }
 
+// for database access without typos
+const USERS = 'users';
+
+/**
+ * Middleware for Express endpoints to require user to be logged in
+ * @param req request object
+ * @param res response object
+ * @param next next action to perform
+ */
+function requiresLogin(req, res, next) {
+    if (!req.session.loggedIn) {
+        req.flash('error', 'this page requires you to be logged in.');
+        return res.redirect("/");
+    } else { next(); }
+};
+
 // ==========================================================================
 
 // main page. just has links to two other pages
 app.get('/', (req, res) => {
-    return res.render('index.ejs');
+    let loggedIn;
+    if (!req.session.loggedIn) { loggedIn = false } else { loggedIn = true };
+    return res.render('index.ejs', { loggedIn: loggedIn });
 });
+
+// ==========================================================================
 
 // recipe pages
 app.get('/recipes/', async (req, res) => {
@@ -161,7 +192,7 @@ app.post('/save-recipe', async (req, res) => {
         );
     }
 
-    res.redirect('back');
+    res.redirect('back'); // might also make an ajax version for alpha
 });
 
 // loads a specific recipe after being clicked on
@@ -181,25 +212,88 @@ app.get('/recipes/:recipeID', async (req, res) => {
                         });
 });
 
-// inventory pages
-// test ingredient items
-const storageLocations = ['fridge', 'freezer', 'pantry'];
-const testIngredients = [{name: "apple", imgFile: "Apple.png", expiration: "04-22-26", amount: 2},
-                         {name: "peach", imgFile: "Peach.png", expiration: "04-12-26", amount: 5},
-                         {name: "eggs", imgFile: "Eggs.png", expiration: "04-30-26", amount: 12}
-                        ];
+// ==========================================================================
 
-// renders inventory page
-app.get('/inventory/:location', requiresLogin, (req, res) => {
+// inventory pages
+const storageLocations = ['fridge', 'freezer', 'pantry'];
+
+// renders inventory page with user's ingredients
+app.get('/inventory/:location', requiresLogin, async (req, res) => {
+    // get storage location (not functional yet)
     const location = req.params.location;
-    return res.render('inventory.ejs', {locations: storageLocations, ingredients: testIngredients});
+    const user = req.session.username; 
+
+    // access user database & get user's inventory items
+    const db = await Connection.open(mongoUri, 'serve');
+    const users = db.collection('users');
+    let userDoc = await users.findOne({username: user});
+    let inventory = userDoc?.inventory ?? [];
+
+    console.log(inventory);
+
+    return res.render('inventory.ejs', {locations: storageLocations, ingredients: inventory});
 });
 
+// inserts an ingredient into the fridge
 app.post('/add-item', requiresLogin, async (req, res) => {
-    const db = await Connection.open(mongoUri, 'serve');
-    // this isn't done lol 
-})
+    
+    // get item info from form
+    const itemName = req.body.itemName;
+    const imgFile = req.body.imgFile; // known example: Apple.png
+    const expiration = req.body.expiration;
+    const amount = req.body.amount;
 
+    // access database
+    const db = await Connection.open(mongoUri, 'serve');
+    const users = db.collection('users');
+
+    let ingredients = await users.updateOne(
+                { username: req.session.username },
+                { $addToSet: { inventory: { itemName: itemName, 
+                                            imgFile: imgFile, 
+                                            expiration: expiration, 
+                                            amount: amount} } },
+                { upsert: true });
+
+    return res.redirect('/inventory/fridge');
+});
+
+// deletes an item from the fridge
+app.post('/delete-item/:itemId', requiresLogin, async (req, res) => {
+    // get specific item to delete from shelf
+    const itemId = req.params.itemId;
+
+    // access database
+    const db = await Connection.open(mongoUri, 'serve');
+    const users = db.collection('users');
+
+    // pull specified item out of user inventory
+    let result = await users.updateOne(
+                { username: req.session.username },
+                { $pull: { inventory: { itemName: itemId } } });
+
+    return res.redirect('/inventory/fridge');
+});
+
+
+// not functional yet, but will be for increasing/decreasing amounts of items (using Ajax?)
+app.post('/increment-item', requiresLogin, async (req, res) => {
+    
+    // get item info from form
+    const itemName = req.body.itemName;
+    const expiration = req.body.expiration;
+    const incNumber = req.body.removeNumber;
+
+    // access database
+    const db = await Connection.open(mongoUri, 'serve');
+    const users = db.collection('users');
+
+    let ingredients = await users.updateOne(
+                { username: req.session.username },
+                { $inc: { inventory: { amount: incNumber } } });
+
+    return res.redirect('/inventory/fridge');
+});
 
 
 // ==========================================================================
@@ -212,18 +306,6 @@ app.get('/profile', requiresLogin, (req, res) => {
     }
     return res.render('profile.ejs', { username: req.session.username});
 });
-
-// password/login stuff
-const USERS = 'users';
-
-function requiresLogin(req, res, next) {
-    if (!req.session.loggedIn) {
-        req.flash('error', 'this page requires you to be logged in.');
-        return res.redirect("/");
-    } else {
-        next();
-    }
-};
 
 // renders log in/register page
 app.get('/login', async (req, res) => { 
@@ -242,8 +324,8 @@ app.post('/signup', async (req, res) => {
         // if username already exists, flash error message
         let existingUser = await db.collection(USERS).findOne({username: username});
         if (existingUser) {
-        req.flash('error', "login already exists. please try logging in instead.");
-        return res.redirect('/login');
+            req.flash('error', "Login already exists. Please try logging in instead.");
+            return res.redirect('/login');
         }
 
         // otherwise insert a new user with empty inventory and savedrecipes
@@ -255,14 +337,14 @@ app.post('/signup', async (req, res) => {
         });
 
         // on successful registration, create session with given username
-        req.flash('info', 'successfully joined and logged in as ' + username);
+        req.flash('info', 'Successfully joined and logged in as ' + username);
         req.session.username = username;
         req.session.loggedIn = true;
         
         return res.redirect('/inventory/fridge');
     
     } catch (error) {
-        req.flash('error', `form submission error: ${error}`);
+        req.flash('error', `Form submission error: ${error}`);
         return res.redirect('/')
     }
 });
@@ -277,23 +359,23 @@ app.post("/login", async (req, res) => {
         let existingUser = await db.collection(USERS).findOne({username: username});
 
         if (!existingUser) {
-            req.flash('error', "username does not exist.");
+            req.flash('error', "Username does not exist.");
             return res.redirect('/')
         }
         const match = await bcrypt.compare(password, existingUser.hash); 
         
         if (!match) {
-            req.flash('error', "username or password incorrect.");
+            req.flash('error', "Username or password incorrect.");
             return res.redirect('/login')
         }
-        req.flash('info', 'successfully logged in as ' + username);
+        req.flash('info', 'Successfully logged in as ' + username);
         req.session.username = username;
         req.session.loggedIn = true;
 
         return res.redirect('/inventory/fridge');
     
     } catch (error) {
-        req.flash('error', `form submission error: ${error}`);
+        req.flash('error', `Form submission error: ${error}`);
         return res.redirect('/');
     }
 });
@@ -303,14 +385,13 @@ app.post('/logout', (req, res) => {
     if (req.session.username) {
         req.session.username = null;
         req.session.loggedIn = false;
-        req.flash('info', 'you are logged out');
+        req.flash('info', 'You are logged out.');
         return res.redirect('/');
     } else {
-        req.flash('error', 'you are not logged in.');
+        req.flash('error', 'You are not logged in.');
         return res.redirect('/');
     }
 });
-
 
 // ==========================================================================
 

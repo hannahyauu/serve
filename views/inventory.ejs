@@ -32,30 +32,40 @@
 </form>
 
 <!-- render list of current ingredients in users inventory -->
-<div class="shelf">
-    <% ingredients.forEach( (ingredient) => { %>
-    <span class="ingredient-container">
-        <img src = "/data/ingredient-images/<%= ingredient.imgFile %>" alt="Image of <%= ingredient.name %>" style="width: 50px">
-        <h2><%= ingredient.name %></h2>
-        <p><%= ingredient.image %></p>
-        <!-- <p><b>expires:</b> <%= ingredient.expiration %></p> -->
-        <p><b>amount:</b> <%= ingredient.amount %></p>
-    </span>
-    <% }) %>   
-    
-<!-- button for user to add ingredients to their inventory  -->
+<div class="shelf" id="shelf1">
+    <% if (ingredients && ingredients.length > 0) { %>
+        <% ingredients.forEach( (ingredient) => { %>
+        <span class="ingredient-container">
+            <img src = "/data/ingredient-images/<%= ingredient.imgFile %>" 
+                 alt="Image of <%= ingredient.itemName %>" style="width: 50px">
+            
+            <h2><%= ingredient.itemName %></h2>
+            <p><b>expires:</b> <%= ingredient.expiration %></p>
+            <p><b>amount:</b> <%= ingredient.amount %></p>
+            
+            <form action="/delete-item/<%= ingredient.itemName %>" method="POST">
+                <button type="submit" class="delete-btn">delete</button>
+            </form>
+        </span>
+        <% }) %>
+    <% } %>
     <button id="add-ingredient" class="add-button">+</button>
-    <div class="form-popup" id="item-popup" style="display:none; position:fixed;">
+</div>
+
+<!-- button for user to add ingredients to their inventory  -->
+    
+<div class="overlay" id="overlay" style="display:none;">
+    <div class="form-popup" id="item-popup" style="display:none;">
         <form id="ingredient-form" action="/add-item" method="POST">
             <h1>enter item</h1>
             <label>item name
-                <input type="text" name="item-name" placeholder="item name" required>
+                <input type="text" name="itemName" placeholder="item name" required>
             </label>
-            <label>image file (not functional yet)
+            <label>image file (ex. Apple.png)
                 <input type="text" name="imgFile" placeholder="image">
             </label>
             <label>expiration date
-                <input type="text" name="expiration" placeholder="expiration date">
+                <input type="date" name="expiration" placeholder="expiration date">
             </label>
             <label>amount
                 <input type="text" name="amount" placeholder=1>
@@ -72,14 +82,13 @@
 <script>
     // open/close ingredient form popup
     function openForm() { 
-        let element = document.getElementById("item-popup");
-        element.style.display = "block";
-        element.style.backdropFilter = "grayscale(100%) blur(10px)";
+        document.getElementById("item-popup").style.display = "block";
+        document.getElementById("overlay").style.display = "block";;
     };
 
     function closeForm() { 
-        let element = document.getElementById("item-popup");
-        element.style.display = "none";
+        document.getElementById("item-popup").style.display = "none";
+        document.getElementById("overlay").style.display = "none";
     }
     
     let element = document.getElementById("add-ingredient");
@@ -95,6 +104,5 @@
         }
     });
 </script>
-
 </body>
 </html>

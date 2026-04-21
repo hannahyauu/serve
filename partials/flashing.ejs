@@ -13,3 +13,11 @@
     <% }) %>
   </div>
 <% } %>
+
+<% if (messages.expiration) { %>
+  <div id="expiration">
+    <% messages.info.forEach( msg => {%>
+    <p><%= msg %></p>
+    <% }) %>
+  </div>
+<% } %>

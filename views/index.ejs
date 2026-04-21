@@ -16,8 +16,14 @@
 <!-- error flashing -->
 <%- include ("../partials/flashing.ejs") %>
 
-<!-- takes you to login page -->
-<h1><a href="/login/">login</a></h1>
+<!-- shows link to login page if not logged in -->
+<% if (!loggedIn) { %>
+    <h1><a href="/login/">login</a></h1>
+
+<!-- shows link to saved recipes if logged in -->
+<% } else { %>
+    <h1><a href="/saved">your saved recipes</a></h1>
+<% } %>
 
 <!-- load local js -->
 <script src="/main.js"></script>
