@@ -119,7 +119,7 @@ app.get('/', (req, res) => {
 // ==========================================================================
 
 // recipe pages
-app.get('/recipes/', async (req, res) => {
+app.get('/recipes/', requiresLogin, async (req, res) => {
     const searchInput = req.query.searchInput;
     const recipes = await getAllRecipes();
     
@@ -145,20 +145,13 @@ app.get('/recipes/', async (req, res) => {
     const db = await Connection.open(mongoUri, 'serve');
     const user = await db.collection('users').findOne({ username: req.session.username });
 
-
     return res.render('recipes.ejs', { recipes: filteredRecipes,
         savedRecipes: user.savedRecipes
     });
 });
 
 // for search
-app.get('/saved', async (req, res) => {
-    // make sure user is logged in 
-    if (!req.session.username) {
-        req.flash('error', 'You are not logged in - please do so.');
-        return res.redirect("/");
-    }
-
+app.get('/saved', requiresLogin, async (req, res) => {
     // find that users saved recipes
     const db = await Connection.open(mongoUri, 'serve');
     const user = await db.collection('users').findOne({username: req.session.username});
@@ -175,7 +168,7 @@ app.get('/saved', async (req, res) => {
 });
 
 // user saves or unsaves recipes 
-app.post('/save-recipe', async (req, res) => {
+app.post('/save-recipe', requiresLogin, async (req, res) => {
     const recipeID = parseInt(req.body.recipeID);
     const db = await Connection.open(mongoUri, 'serve');
     const user = await db.collection('users').findOne({ username: req.session.username });
@@ -249,7 +242,6 @@ app.get('/inventory/:location', requiresLogin, async (req, res) => {
             }
         });
     }
-
     return res.render('inventory.ejs', {locations: storageLocations, ingredients: inventory});
 });
 

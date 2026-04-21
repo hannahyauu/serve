@@ -1,7 +1,7 @@
-@font-face {
+/* @font-face {
   font-family: myFirstFont;
   src: url(sansation_light.woff);
-}
+} */
 
 body {
     font-family: 'Lato', sans-serif;
@@ -125,6 +125,7 @@ body {
 
 .navbar {
     background-color: #11153f;
+    font-family: 'Lato', sans-serif;
     display: flex;
     justify-content: space-between;
     align-items: center;
