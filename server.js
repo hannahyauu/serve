@@ -314,7 +314,8 @@ app.post('/add-item', requiresLogin, async (req, res) => {
     
     // get item info from form
     const itemName = req.body.itemName;
-    const imgFile = req.body.imgFile; // known example: Apple.png
+    const imgFile = itemName[0].toUpperCase() + itemName.slice(1) + '.png';
+
     const expiration = req.body.expiration;
     const amount = req.body.amount;
 
@@ -324,8 +325,8 @@ app.post('/add-item', requiresLogin, async (req, res) => {
 
     let ingredients = await users.updateOne(
                 { username: req.session.username },
-                { $addToSet: { inventory: { itemName: itemName, 
-                                            imgFile: imgFile, 
+                { $addToSet: { inventory: { itemName: itemName,  
+                                            imgFile: imgFile,
                                             expiration: expiration, 
                                             amount: amount} } },
                 { upsert: true });

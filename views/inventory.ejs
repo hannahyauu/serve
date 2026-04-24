@@ -38,7 +38,6 @@
         <span class="ingredient-container">
             <img src = "/data/ingredient-images/<%= ingredient.imgFile %>" 
                  alt="Image of <%= ingredient.itemName %>" style="width: 50px">
-            
             <h2><%= ingredient.itemName %></h2>
             <p><b>expires:</b> <%= ingredient.expiration %></p>
             <p><b>amount:</b> <%= ingredient.amount %></p>
@@ -60,9 +59,6 @@
             <h1>enter item</h1>
             <label>item name
                 <input type="text" name="itemName" placeholder="item name" required>
-            </label>
-            <label>image file (ex. Apple.png)
-                <input type="text" name="imgFile" placeholder="image">
             </label>
             <label>expiration date
                 <input type="date" name="expiration" placeholder="expiration date">
