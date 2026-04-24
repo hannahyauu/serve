@@ -21,6 +21,7 @@ const ROUNDS = 10;
 // our modules loaded from cwd
 const { Connection } = require('./connection');
 const cs304 = require('./cs304');
+const { filter } = require('bluebird');
 
 // create and configure the app
 const app = express();
@@ -42,6 +43,10 @@ app.set('view engine', 'ejs');
 
 const mongoUri = cs304.getMongoUri();
 
+// for database access without typos
+const USERS = 'users';
+const RECIPES = 'recipes';
+
 // took this from passwords example app?? does this work...
 app.use(cookieSession({
   name: 'session',
@@ -58,40 +63,78 @@ app.use(cookieSession({
  */
 async function getAllRecipes() {
     const db = await Connection.open(mongoUri, 'serve');
-    return db.collection('recipes').find({}).toArray();
+    return db.collection(RECIPES).find({}).toArray();
 }
 
 /**
- * Finds all ingredients with single ingredient in ingredient list
- * @param {String} ingredient
- * @returns list of recipe that contain ingredient
+ * Finds all recipes with users ingredients in users inventory
+ * @param {String} username
+ * @returns list of recipes that contain ingredient
  */
-async function recipesByIngredient(ingredient) {
+async function recipesByInventory(username) {
+    const userInventory = await getCurrentInventory(username);
     const db = await Connection.open(mongoUri, 'serve');
-    const recipes = db.collection('recipes').find({}).toArray();
-    const filter = recipes.filter(recipe =>
-        recipe.cleanedIngredients.map(item =>
+    // const recipes = await db.collection(RECIPES).find({}).toArray();
+    const recipes = await db.collection(RECIPES)
+    .find({
+        title: { $ne: null },
+        cleanedIngredients: { $ne: [''] }
+    })
+    .toArray();
+    
+    // const filter = recipes.filter(recipe =>
+    //     recipe.cleanedIngredients.map(item =>
+    //         item.toLowerCase().includes(ingredient.toLowerCase())
+    //     )
+    // );
+    // console.log(recipes, 'recipes');
+    // console.log(userInventory);
+    // let validRecipes = [];
+
+    // userInventory.forEach((ingredient) => validRecipes.push(recipes.filter(recipe =>
+    //     recipe.cleanedIngredients.map(item =>
+    //         item.toLowerCase().includes(ingredient.toLowerCase())
+    //     ))));
+
+    // userInventory.forEach((ingredient) => console.log(recipes.filter(recipe =>
+    //     recipe.cleanedIngredients.map(item =>
+    //         item.toLowerCase().includes(ingredient.toLowerCase())
+    //     ))));
+
+    const filteredRecipes = recipes.filter(recipe =>
+    recipe.cleanedIngredients.every(ingredient =>
+        userInventory.some(item =>
             item.toLowerCase().includes(ingredient.toLowerCase())
-        )
-    );
-    return filter
+        )));
+    console.log(filteredRecipes);
+    // console.log(validRecipes, 'recipesbyinventory');
+
+    return filteredRecipes;
 }
 
 /**
  * For future use -- gets inventory of currently logged in user
  * @returns list of ingredients in inventory
  */
-async function getCurrentInventory() {
+async function getCurrentInventory(username) {
+    // find user in db 
+    const db = await Connection.open(mongoUri, 'serve');
+    const user = await db.collection(USERS).findOne({username: username});
+    const userInventory = user.inventory;
+    // add ingredients in users db to list for output
+    let userIngredients = [];
+    userIngredients = userInventory.map((x) => x.itemName);
+    return user ? userIngredients : []; // return empty list if inventory is empty
 }
 
 // for future use but get everything currently in this users saved recipes
-async function getSavedRecipes(){
-    // const db = await Connection.open(mongoUri, 'serve');
-    // const user = db.collections('user').find({});
-}
+// async function getSavedRecipes(username){
+//     const db = await Connection.open(mongoUri, 'serve');
+//     const user = db.collections('user').find({username: username});
+//     const userInventory = user.savedRecipes.toArray();
+//     return userInventory;
+// }
 
-// for database access without typos
-const USERS = 'users';
 
 /**
  * Middleware for Express endpoints to require user to be logged in
@@ -122,9 +165,10 @@ app.get('/', (req, res) => {
 app.get('/recipes/', requiresLogin, async (req, res) => {
     const searchInput = req.query.searchInput;
     const recipes = await getAllRecipes();
-    
+    const username = req.session.username;
     // rename for interpretability 
-    let filteredRecipes = recipes;
+    // let filteredRecipes = recipes;
+    let filteredRecipes = await recipesByInventory(username);
 
     // if someone searches something, filter recipe list
     if (searchInput) {
@@ -138,15 +182,34 @@ app.get('/recipes/', requiresLogin, async (req, res) => {
                 ingredient.toLowerCase().includes(search)
             ) || title.includes(search);
         });
+    // } else {
+        // const db = await Connection.open(mongoUri, 'serve');
+        // const recipes = await db.collection(RECIPES).find({}).toArray();
+        // const user = await db.collection(USERS).findOne({username: username});
+        // const userInventory = user.inventory;
+
+        // let userIngredients = [];
+        // let validRecipes = [];
+
+        // const filter = recipes.filter(recipe =>
+        // recipe.cleanedIngredients.map(item =>
+        //     item.toLowerCase().includes(ingredient.toLowerCase())
+        // ));
+
+        // userInventory.forEach((x) => userIngredients.push(x.itemName));
+        // userIngredients.forEach((x) => validRecipes.push(recipesByIngredient(x)));
+
+    // );
     }
 
     // grab users username to retrieve saved recipes and pass to recipes page
     // this will render red / grey hearts 
     const db = await Connection.open(mongoUri, 'serve');
-    const user = await db.collection('users').findOne({ username: req.session.username });
+    const user = await db.collection(USERS).findOne({ username: username });
 
+    // console.log('filteredRecipes', filteredRecipes[0]);
     return res.render('recipes.ejs', { recipes: filteredRecipes,
-        savedRecipes: user.savedRecipes
+        savedRecipes: user.savedRecipes || []
     });
 });
 
@@ -154,7 +217,7 @@ app.get('/recipes/', requiresLogin, async (req, res) => {
 app.get('/saved', requiresLogin, async (req, res) => {
     // find that users saved recipes
     const db = await Connection.open(mongoUri, 'serve');
-    const user = await db.collection('users').findOne({username: req.session.username});
+    const user = await db.collection(USERS).findOne({username: req.session.username});
     const savedRecipes = await db.collection('recipes').find({
     recipeID: { $in: user.savedRecipes }
     }).toArray();
@@ -171,7 +234,7 @@ app.get('/saved', requiresLogin, async (req, res) => {
 app.post('/save-recipe', requiresLogin, async (req, res) => {
     const recipeID = parseInt(req.body.recipeID);
     const db = await Connection.open(mongoUri, 'serve');
-    const user = await db.collection('users').findOne({ username: req.session.username });
+    const user = await db.collection(USERS).findOne({ username: req.session.username });
     
     // if user unsaving 
     if (user.savedRecipes.includes(recipeID)) {
@@ -193,12 +256,13 @@ app.post('/save-recipe', requiresLogin, async (req, res) => {
 app.get('/recipes/:recipeID', async (req, res) => {
     const recipeID = req.params.recipeID;
     const db = await Connection.open(mongoUri, 'serve');
-    const recipe = await db.collection('recipes').findOne({recipeID: parseInt(recipeID)});
+    const recipe = await db.collection(RECIPES).findOne({recipeID: parseInt(recipeID)});
 
     //render flashes later
     if (recipe === null) {
         req.flash('error', "There is no recipe with that recipe ID!");
     }
+
 
     return res.render('recipeSpecific.ejs',
                         {recipeID,
@@ -219,7 +283,7 @@ app.get('/inventory/:location', requiresLogin, async (req, res) => {
 
     // access user database & get user's inventory items
     const db = await Connection.open(mongoUri, 'serve');
-    const users = db.collection('users');
+    const users = db.collection(USERS);
     let userDoc = await users.findOne({username: user});
     let inventory = userDoc?.inventory ?? [];
 
@@ -256,7 +320,7 @@ app.post('/add-item', requiresLogin, async (req, res) => {
 
     // access database
     const db = await Connection.open(mongoUri, 'serve');
-    const users = db.collection('users');
+    const users = db.collection(USERS);
 
     let ingredients = await users.updateOne(
                 { username: req.session.username },
@@ -276,7 +340,7 @@ app.post('/delete-item/:itemId', requiresLogin, async (req, res) => {
 
     // access database
     const db = await Connection.open(mongoUri, 'serve');
-    const users = db.collection('users');
+    const users = db.collection(USERS);
 
     // pull specified item out of user inventory
     let result = await users.updateOne(
@@ -297,7 +361,7 @@ app.post('/increment-item', requiresLogin, async (req, res) => {
 
     // access database
     const db = await Connection.open(mongoUri, 'serve');
-    const users = db.collection('users');
+    const users = db.collection(USERS);
 
     let ingredients = await users.updateOne(
                 { username: req.session.username },
