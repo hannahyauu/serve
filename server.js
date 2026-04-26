@@ -74,7 +74,6 @@ async function getAllRecipes() {
 async function recipesByInventory(username) {
     const userInventory = await getCurrentInventory(username);
     const db = await Connection.open(mongoUri, 'serve');
-    // const recipes = await db.collection(RECIPES).find({}).toArray();
     const recipes = await db.collection(RECIPES)
     .find({
         title: { $ne: null },
@@ -82,32 +81,21 @@ async function recipesByInventory(username) {
     })
     .toArray();
     
-    // const filter = recipes.filter(recipe =>
-    //     recipe.cleanedIngredients.map(item =>
-    //         item.toLowerCase().includes(ingredient.toLowerCase())
-    //     )
-    // );
-    // console.log(recipes, 'recipes');
-    // console.log(userInventory);
-    // let validRecipes = [];
+    const filteredRecipes = recipes.filter(recipe => {
+    const ingredients = (recipe.cleanedIngredients || [])
+            .filter(ing => ing && ing.trim() !== ''); 
 
-    // userInventory.forEach((ingredient) => validRecipes.push(recipes.filter(recipe =>
-    //     recipe.cleanedIngredients.map(item =>
-    //         item.toLowerCase().includes(ingredient.toLowerCase())
-    //     ))));
+            if (ingredients.length === 0) return false;
 
-    // userInventory.forEach((ingredient) => console.log(recipes.filter(recipe =>
-    //     recipe.cleanedIngredients.map(item =>
-    //         item.toLowerCase().includes(ingredient.toLowerCase())
-    //     ))));
+            const matchCount = ingredients.filter(ingredient =>
+                userInventory.some(item =>
+                    item.toLowerCase().includes(ingredient.toLowerCase())
+                )
+            ).length;
 
-    const filteredRecipes = recipes.filter(recipe =>
-    recipe.cleanedIngredients.every(ingredient =>
-        userInventory.some(item =>
-            item.toLowerCase().includes(ingredient.toLowerCase())
-        )));
-    console.log(filteredRecipes);
-    // console.log(validRecipes, 'recipesbyinventory');
+        // user has at least 1/4 of required ingredients
+            return (matchCount / ingredients.length) >= 0.25;
+    });
 
     return filteredRecipes;
 }
@@ -126,15 +114,6 @@ async function getCurrentInventory(username) {
     userIngredients = userInventory.map((x) => x.itemName);
     return user ? userIngredients : []; // return empty list if inventory is empty
 }
-
-// for future use but get everything currently in this users saved recipes
-// async function getSavedRecipes(username){
-//     const db = await Connection.open(mongoUri, 'serve');
-//     const user = db.collections('user').find({username: username});
-//     const userInventory = user.savedRecipes.toArray();
-//     return userInventory;
-// }
-
 
 /**
  * Middleware for Express endpoints to require user to be logged in
@@ -182,24 +161,6 @@ app.get('/recipes/', requiresLogin, async (req, res) => {
                 ingredient.toLowerCase().includes(search)
             ) || title.includes(search);
         });
-    // } else {
-        // const db = await Connection.open(mongoUri, 'serve');
-        // const recipes = await db.collection(RECIPES).find({}).toArray();
-        // const user = await db.collection(USERS).findOne({username: username});
-        // const userInventory = user.inventory;
-
-        // let userIngredients = [];
-        // let validRecipes = [];
-
-        // const filter = recipes.filter(recipe =>
-        // recipe.cleanedIngredients.map(item =>
-        //     item.toLowerCase().includes(ingredient.toLowerCase())
-        // ));
-
-        // userInventory.forEach((x) => userIngredients.push(x.itemName));
-        // userIngredients.forEach((x) => validRecipes.push(recipesByIngredient(x)));
-
-    // );
     }
 
     // grab users username to retrieve saved recipes and pass to recipes page

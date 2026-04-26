@@ -144,6 +144,16 @@ body {
     text-decoration: none;
 }
 
+.start-logo {
+    font-family: 'Lato', sans-serif;
+    font-size: 85px;
+    font-weight: 900;
+    color: #2b315d;
+    letter-spacing: -2px;
+    text-shadow: 3px 3px 0px #9aa7cc;
+    text-decoration: none;
+}
+
 .nav-links {
     display: flex;
     align-items: center;
@@ -160,6 +170,21 @@ body {
     padding: 12px 28px;
     border-radius: 14px;
     letter-spacing: 3px;
+    
+}
+
+
+.start-btn {
+    font-family: 'Lato', sans-serif;
+    font-size: 24px;
+    font-weight: 300;
+    color: #2b315d;
+    text-decoration: none;
+    background-color: lightgrey;
+    padding: 12px 28px;
+    border-radius: 14px;
+    letter-spacing: 3px;
+    align-items: center;
 }
 
 .nav-btn:hover {
