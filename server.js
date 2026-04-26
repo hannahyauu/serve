@@ -349,6 +349,10 @@ app.get('/login', async (req, res) => {
     return res.render('login.ejs');
 });
 
+app.get('/signup', async (req, res) => { 
+    return res.render('signup.ejs');
+});
+
 // process sign up form submission: creates user in users collection
 app.post('/signup', async (req, res) => {
     try {
