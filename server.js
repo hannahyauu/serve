@@ -39,7 +39,6 @@ app.use(bodyParser.json());
 // file upload with multer
 const multer = require("multer");
 const { count } = require('console');
-app.use('/uploads', express.static('uploads'));
 
 app.use(cs304.logRequestData);  // tell the user about any request data
 
@@ -306,7 +305,7 @@ app.get('/recipes/', requiresLogin, async (req, res) => {
     return res.render('recipes.ejs', { recipes: filteredRecipes,
         savedRecipes: user.savedRecipes || []
     });
-});
+    });
 
 /**
  * GET /saved
@@ -449,11 +448,7 @@ let upload = multer({ storage: storage,
 // starting number for recipeIDs
 let COUNTER = 13500; // DON'T TOUCH THIS LOL
 
-/**
- * POST /add-recipe
- * form takes recipe name, image file, ingredients list, and instructions
- * adds recipe to user's createdRecipes list with a unique ID number
- */
+// form to add new recipe takes recipe name, image file, ingredients list, and instructions
 app.post('/add-recipe', requiresLogin, upload.single('image'), async (req, res) => {
     const username = req.session.username;
     
@@ -478,10 +473,9 @@ app.post('/add-recipe', requiresLogin, upload.single('image'), async (req, res) 
                       path: '/uploads/'+req.file.filename});
     console.log('insertOne result', result);
 
-    // ID for new recipe is the number of documents in recipes collection +1
-    let recipeID = await db.collection(RECIPES).countDocuments();
-    recipeID++;
-    console.log(recipeID);
+    // ID for new recipe is index of the last document in recipes collection +1
+    COUNTER++;
+    let recipeID = COUNTER;
 
     // upsert recipe into recipe collection
     let recipe = await recipes.insertOne( { cleanedIngredients: ingredients,
@@ -506,11 +500,7 @@ app.post('/add-recipe', requiresLogin, upload.single('image'), async (req, res) 
 // inventory pages
 const storageLocations = ['fridge', 'freezer', 'pantry'];
 
-/**
- * GET /inventory/:location
- * gets user's inventory per storage location
- * renders items in that storage location, calculates expiration date notifications
- */
+// renders inventory page with user's ingredients
 app.get('/inventory/:location', requiresLogin, async (req, res) => {
     // get storage location
     const location = req.params.location;
@@ -553,11 +543,7 @@ app.get('/inventory/:location', requiresLogin, async (req, res) => {
                                         expiringItems: expiringItems});
 });
 
-/**
- * POST /add-item
- * inserts an ingredient (with the given form info) into user's inventory
- * redirects to fridge
- */
+// inserts an ingredient into the fridge
 app.post('/add-item', requiresLogin, async (req, res) => {
     
     // get item info from form
@@ -581,11 +567,7 @@ app.post('/add-item', requiresLogin, async (req, res) => {
     return res.redirect('/inventory/fridge');
 });
 
-/**
- * POST /delete-item
- * deletes the specified item from the fridge using itemId and currLocation
- * redirects to the deleted item's location
- */
+// deletes an item from the fridge
 app.post('/delete-item', requiresLogin, async (req, res) => {
     // get specific item to delete from shelf
     const itemId = req.body.itemId;
@@ -620,21 +602,16 @@ app.get('/profile', requiresLogin, (req, res) => {
     return res.render('profile.ejs', { username: req.session.username });
 });
 
-// log in page
+// renders log in/register page
 app.get('/login', async (req, res) => { 
     return res.render('login.ejs');
 });
 
-// sign up page
 app.get('/signup', async (req, res) => { 
     return res.render('signup.ejs');
 });
 
-/**
- * POST /signup
- * creates user with submitted username/password 
- * inserts into users collection
- */
+// process sign up form submission: creates user in users collection
 app.post('/signup', async (req, res) => {
     try {
         const username = req.body.username;
@@ -672,10 +649,7 @@ app.post('/signup', async (req, res) => {
     }
 });
 
-/**
- * POST /login
- * checks username and password match, then logs user in
- */
+// process login form submission
 app.post("/login", async (req, res) => {
     try {
         const username = req.body.username;
@@ -706,10 +680,7 @@ app.post("/login", async (req, res) => {
     }
 });
 
-/**
- * POST /logout
- * log out if currently logged in, flashes error otherwise
- */
+// log out if currently logged in, flashes error otherwise
 app.post('/logout', (req, res) => {
     if (req.session.username) {
         req.session.username = null;

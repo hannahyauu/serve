@@ -5,10 +5,10 @@ body {
 /* Holds all recipecards */
 .card-container {
     display: grid;
-    grid-template-columns: repeat(auto-fill, 300px); 
+    grid-template-columns: repeat(auto-fill, 300px); /* fixed card size */
     gap: 40px;
     padding: 40px;
-    justify-content: center;  
+    justify-content: center;  /* THIS centers the grid */
 }
 
 .recipeCard {
@@ -25,6 +25,11 @@ body {
     box-shadow: 0 10px 20px rgba(0,0,0,0.2);
 }
 
+.recipe-link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+}
 
 .recipe-img {
     width: 100%;
@@ -167,7 +172,7 @@ body {
     column-gap: 60px;  
     row-gap: 15px;  
     display: grid;
-    grid-template-columns: auto auto auto auto auto;
+    grid-template-columns: repeat(auto-fit, 220px);
     padding: 20px;
     justify-content: center;
 }
@@ -184,6 +189,7 @@ body {
     flex-direction: column;
     align-items: center;
     text-align: center;
+    justify-content: center; 
 }
 
 .ingredient-container h2 {
@@ -554,12 +560,15 @@ label {
 .expiration-flash strong {
     color: rgb(250, 255, 187);
 }
+
 .sr-only {
     position: absolute;
     width: 1px;
     height: 1px;
+    padding: 0;
     margin: -1px;
     overflow: hidden;
-    clip: rect(0,0,0,0);
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
     border: 0;
 }
