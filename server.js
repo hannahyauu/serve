@@ -98,6 +98,7 @@ async function recipesByInventory(username) {
         title: { $ne: null },
         cleanedIngredients: { $ne: [''] }
     })
+    .limit(100)
     .toArray();
     
     const filteredRecipes = recipes.filter(recipe => {
@@ -212,8 +213,9 @@ app.get('/', (req, res) => {
 
 // recipe pages
 app.get('/recipes/', requiresLogin, async (req, res) => {
+    try { 
     const searchInput = req.query.searchInput;
-    const recipes = await getAllRecipes();
+    // const recipes = await getAllRecipes();
     const username = req.session.username;
     const filters = req.query.filters;
     let selectedFilters = [];
@@ -264,6 +266,10 @@ app.get('/recipes/', requiresLogin, async (req, res) => {
     return res.render('recipes.ejs', { recipes: filteredRecipes,
         savedRecipes: user.savedRecipes || []
     });
+} catch (err) {
+    console.error("RECIPES PAGE ERROR:", err);
+        res.status(500).send(err.message);
+}
 });
 
 // for search
