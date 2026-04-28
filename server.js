@@ -446,7 +446,7 @@ let upload = multer({ storage: storage,
                       limits: {fileSize: 1_000_000 }});
 
 // starting number for recipeIDs
-let COUNTER = 13502;
+let COUNTER = 13500; // DON'T TOUCH THIS LOL
 
 // form to add new recipe takes recipe name, image file, ingredients list, and instructions
 app.post('/add-recipe', requiresLogin, upload.single('image'), async (req, res) => {
@@ -490,6 +490,8 @@ app.post('/add-recipe', requiresLogin, upload.single('image'), async (req, res) 
                                     { username: username },
                                     { $addToSet: { createdRecipes: recipeID } });
 
+    // confirmation message + redirect to the new recipe page
+    req.flash('info', 'Recipe added!');
     return res.redirect(`/recipes/${recipeID}`);
 });
 
@@ -546,12 +548,9 @@ app.post('/add-item', requiresLogin, async (req, res) => {
     
     // get item info from form
     const itemName = req.body.itemName;
-    let itemId; // need to generate the next ID number in the sequence for this OR maybe not???
-
     const imgFile = itemName[0].toUpperCase() + itemName.slice(1) + '.png';
     const location = req.body.chosenLocation;
     const expiration = req.body.expiration;
-    const amount = req.body.amount;
 
     // access database
     const db = await Connection.open(mongoUri, 'serve');
@@ -562,61 +561,35 @@ app.post('/add-item', requiresLogin, async (req, res) => {
                 { $addToSet: { inventory: { itemName: itemName,  
                                             imgFile: imgFile,
                                             location: location,
-                                            expiration: expiration, 
-                                            amount: amount} } },
+                                            expiration: expiration } } },
                 { upsert: true });
 
     return res.redirect('/inventory/fridge');
 });
 
 // deletes an item from the fridge
-app.post('/delete-item/:itemId', requiresLogin, async (req, res) => {
+app.post('/delete-item', requiresLogin, async (req, res) => {
     // get specific item to delete from shelf
-    const itemId = req.params.itemId;
+    const itemId = req.body.itemId;
+    const currLocation = req.body.location;
     const username = req.session.username;
 
     // access database
     const db = await Connection.open(mongoUri, 'serve');
     const users = db.collection(USERS);
 
+    // if there are items in the inventory, get the current location for precise redirect
+    let userDoc = await users.findOne({username: username});
+    let userInv = userDoc.inventory || [];
+
     // pull specified item out of user inventory
     let result = await users.updateOne(
                 { username: username },
-                { $pull: { inventory: { itemName: itemId } } });
+                { $pull: { inventory: { itemName: itemId, location: currLocation } } } );
 
-    // get current location for precise redirect (fridge, freezer, or pantry)
-    let userDoc = users.findOne({username: username});
-    let userInv = userDoc?.inventory ?? [];
-    
-    if (userInv) {
-        let userItem = userInv.find(item => item.itemName === itemId);
-        let currLocation = userItem.location; 
-        return res.redirect(`/inventory/${currLocation}`);
-    } else {
-        return res.redirect('/inventory/fridge');
-    }
+    // redirect to specified location (fridge is default if none given)
+    return res.redirect(`/inventory/${currLocation}`);
 });
-
-
-// not functional yet, but will be for increasing/decreasing amounts of items (using Ajax?)
-app.post('/increment-item', requiresLogin, async (req, res) => {
-    
-    // get item info from form
-    const itemName = req.body.itemName;
-    const expiration = req.body.expiration;
-    const incNumber = req.body.removeNumber;
-
-    // access database
-    const db = await Connection.open(mongoUri, 'serve');
-    const users = db.collection(USERS);
-
-    let ingredients = await users.updateOne(
-                { username: req.session.username },
-                { $inc: { inventory: { amount: incNumber } } });
-
-    return res.redirect('/inventory/fridge');
-});
-
 
 // ==========================================================================
 

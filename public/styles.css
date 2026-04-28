@@ -1,8 +1,3 @@
-/* @font-face {
-  font-family: myFirstFont;
-  src: url(sansation_light.woff);
-} */
-
 body {
     font-family: 'Lato', sans-serif;
 }
@@ -15,7 +10,6 @@ body {
     padding: 40px;
     justify-content: center;  /* THIS centers the grid */
 }
-
 
 .recipeCard {
     position: relative;
@@ -363,7 +357,7 @@ body {
     height: 70%;
     z-index: 100;
     line-height: 1.8;
-    position:fixed;
+    position: fixed;
     box-shadow: 0 10px 25px rgba(0,0,0,0.25);
 }
 
@@ -513,11 +507,21 @@ label {
 }
 
 #start-form {
-    gap: 15px;
-    background: #e6e6e6;
-    padding: 30px;
-    border-radius: 15px;
-    width: 300px;
+    background: #f7f7f7;
+    align-items: left;
+    justify-content: center;
+    padding: 35px;
+    border: #9aa7cc solid 3px;
+    border-radius: 35px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 30%;
+    height: 30%;
+    z-index: 100;
+    line-height: 1.8;
+    position: fixed;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.25);
 }
 
 .expiration-flash {

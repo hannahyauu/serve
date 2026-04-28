@@ -54,9 +54,10 @@
                     alt="Image of <%= ingredient.itemName %>">
                     <h2><%= ingredient.itemName %></h2>
                     <p><b>expires:</b> <%= ingredient.expiration %></p>
-                    <p><b>amount:</b> <%= ingredient.amount %></p>
                     
-                    <form action="/delete-item/<%= ingredient.itemName %>" method="POST">
+                    <form action="/delete-item" method="POST">
+                        <input type="hidden" name="itemId" value="<%= ingredient.itemName %>">
+                        <input type="hidden" name="location" value="<%= ingredient.location %>">
                         <button type="submit" class="delete-btn">delete</button>
                     </form>
                 </span>
@@ -66,7 +67,7 @@
     <button id="add-ingredient" class="add-button">+</button>
 </div>
 
-<!-- form for adding an ingredient into inventory. takes name, location, expiration, amount  -->
+<!-- form for adding an ingredient into inventory. takes name, location, expiration -->
 <div class="overlay" id="overlay" style="display:none;">
     <div class="form-popup" id="item-popup" style="display:none;">
         <form id="ingredient-form" action="/add-item" method="POST">
@@ -76,16 +77,13 @@
             </label>
             <label>storage location
                 <select name="chosenLocation" required>
-                    <% locations.forEach( (location, index) => { %>
+                    <% locations.forEach( (location) => { %>
                         <option value="<%= location %>"><%= location %></option>
                     <% }) %>
                 </select>
             </label>
             <label>expiration date
                 <input type="date" name="expiration" placeholder="expiration date">
-            </label>
-            <label>amount
-                <input type="text" name="amount" placeholder=1>
             </label>
             <button type="submit">submit</button>
             <button type="button" onclick="closeForm('item-popup')">close</button>
