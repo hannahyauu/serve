@@ -66,6 +66,11 @@ async function getAllRecipes() {
     return db.collection(RECIPES).find({}).toArray();
 }
 
+function matchesIngredient(recipeIngredient, userIngredient) {
+    return recipeIngredient.includes(userIngredient) ||
+           userIngredient.includes(recipeIngredient);
+}
+
 /**
  * Finds all recipes with users ingredients in users inventory
  * @param {String} username
@@ -88,10 +93,10 @@ async function recipesByInventory(username) {
             if (ingredients.length === 0) return false;
 
             const matchCount = ingredients.filter(ingredient =>
-                userInventory.some(item =>
-                    item.toLowerCase().includes(ingredient.toLowerCase())
-                )
-            ).length;
+            userInventory.some(item =>
+                matchesIngredient(ingredient.toLowerCase(), item.toLowerCase())
+            )
+        ).length;
 
         // user has at least 1/4 of required ingredients
             return (matchCount / ingredients.length) >= 0.25;
@@ -128,6 +133,43 @@ function requiresLogin(req, res, next) {
     } else { next(); }
 };
 
+function isVegan(recipe) {
+    const nonVegan = [
+        "chicken", "beef", "pork", "fish", "shrimp",
+        "ham", "bacon", "sausage", "lamb", "turkey",
+        "milk", "butter", "cheese", "egg", "yogurt", "honey",
+        "cream", "ghee", "mayo", "mayonnaise", "anchovy", "snapper", 
+        "fish", "salmon", "ribs", "spam",
+    ];
+
+    return !recipe.cleanedIngredients.some(ingredient =>
+        nonVegan.some(bad => ingredient.toLowerCase().includes(bad))
+    );
+}
+
+function isVegetarian(recipe) {
+    const nonVegetarian = [
+        "chicken", "beef", "pork", "fish", "shrimp",
+        "ham", "bacon", "sausage", "lamb", "turkey",
+        "anchovy", "chorizo", "snapper", 
+        "fish", "salmon", "ribs", "spam",
+    ];
+
+    return !recipe.cleanedIngredients.some(ingredient =>
+        nonVegetarian.some(bad => ingredient.toLowerCase().includes(bad))
+    );
+}
+
+function isGlutenFree(recipe) {
+    const gluten = [
+        "flour", "wheat", "bread", "pasta", "noodle", "barley"
+    ];
+
+    return !recipe.cleanedIngredients.some(ingredient =>
+        gluten.some(bad => ingredient.toLowerCase().includes(bad))
+    );
+}
+
 // ==========================================================================
 
 // main page. just has links to two other pages
@@ -145,8 +187,14 @@ app.get('/recipes/', requiresLogin, async (req, res) => {
     const searchInput = req.query.searchInput;
     const recipes = await getAllRecipes();
     const username = req.session.username;
-    // rename for interpretability 
-    // let filteredRecipes = recipes;
+    const filters = req.query.filters;
+    let selectedFilters = [];
+
+    // if user selected any filters
+    if (filters) {
+        selectedFilters = Array.isArray(filters) ? filters : [filters];
+    }
+
     let filteredRecipes = await recipesByInventory(username);
 
     // if someone searches something, filter recipe list
@@ -154,7 +202,7 @@ app.get('/recipes/', requiresLogin, async (req, res) => {
         // grab search input 
         const search = searchInput.toLowerCase();
 
-        filteredRecipes = recipes.filter(recipe => {
+        filteredRecipes = filteredRecipes.filter(recipe => {
             const title = (recipe.title || '').toLowerCase();
 
             return recipe.cleanedIngredients.some(ingredient =>
@@ -162,6 +210,18 @@ app.get('/recipes/', requiresLogin, async (req, res) => {
             ) || title.includes(search);
         });
     }
+
+            if (selectedFilters.includes("vegan")) {
+            filteredRecipes = filteredRecipes.filter(isVegan);
+        }
+
+        if (selectedFilters.includes("vegetarian")) {
+            filteredRecipes = filteredRecipes.filter(isVegetarian);
+        }
+
+        if (selectedFilters.includes("glutenFree")) {
+            filteredRecipes = filteredRecipes.filter(isGlutenFree);
+        }
 
     // grab users username to retrieve saved recipes and pass to recipes page
     // this will render red / grey hearts 
