@@ -99,6 +99,7 @@ body {
 .recipe {
     background-color: #ABBADE;
     font-family: 'Lato';
+    margin: 22px;
 }
 
 .recipe-text {
@@ -205,7 +206,7 @@ body {
 .delete-btn {
     margin-top: 12px;
     border: none;
-    background: #a8cd9d;
+    background: #709466;
     color: #ffffff;
     padding: 8px 16px;
     border-radius: 18px;
@@ -224,12 +225,12 @@ body {
     align-items: center;
     padding: 20px 40px;
     border-radius: 20px;
-    /* margin: 12px; */
+    margin-bottom: 16px;
 }
 
 .button-bar {
     display: flex;
-    padding: 20px 40px;
+    padding-bottom: 20px;
     align-items: center;
     justify-content: space-between;
     font-family: 'Lato', sans-serif;
@@ -273,25 +274,25 @@ body {
 .nav-btn {
     font-family: 'Lato', sans-serif;
     font-size: 24px;
-    font-weight: 300;
+    font-weight: 375;
     color: white;
     text-decoration: none;
     background-color: #2b315d;
     padding: 12px 28px;
     border-radius: 14px;
-    letter-spacing: 3px;
+    letter-spacing: 2px;
 }
 
 .start-btn {
     font-family: 'Lato', sans-serif;
     font-size: 24px;
-    font-weight: 300;
+    font-weight: 375;
     color: #2b315d;
     text-decoration: none;
     background-color: lightgrey;
     padding: 12px 28px;
     border-radius: 14px;
-    letter-spacing: 3px;
+    letter-spacing: 2px;
     align-items: center;
 }
 
@@ -317,7 +318,7 @@ body {
     border-radius: 200px;
     border: none;
     background: #fdffe6;
-    color: #97a157;
+    color: #709466;
     font-size: 70px;
     cursor: pointer;
     box-shadow: 0 6px 14px rgba(0,0,0,0.12);
@@ -361,6 +362,10 @@ body {
     box-shadow: 0 10px 25px rgba(0,0,0,0.25);
 }
 
+#recipe-popup {
+    height: 85%;
+}
+
 #ingredient-form, #new-recipe {
     display: flex;
     flex-direction: column;
@@ -399,6 +404,17 @@ body {
     padding: 10px;
     border-radius: 15px;
     border: 1px solid #ccc;
+}
+
+::placeholder {
+    color: #b7bbbe;
+    font-size: 15px;
+    font-family: 'Lato'
+}
+
+textarea {
+    font-size: 15px;
+    font-family: 'Lato'
 }
 
 .recipe-button {

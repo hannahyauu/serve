@@ -71,12 +71,12 @@
             <label>image
                 <input type="file" name="image" accept=".jpg" class="">
             </label>
-            <label>ingredients
+            <label>ingredients (separate with commas)
                 <input type="text" name="ingredients" required>
             </label>
             <label>instructions
-                <input type="textarea" rows="10" cols="32" name="instructions" 
-                       placeholder="1. Beat eggs in medium sized bowl..." required>
+                <textarea rows="10" cols="32" name="instructions" 
+                       placeholder="1. Beat eggs in medium sized bowl..." required></textarea>
             </label>
             <button type="submit">submit</button>
             <button type="button" onclick="closeForm('recipe-popup')">close</button>
@@ -93,13 +93,12 @@
                 <div class="recipe-card-content">
                     <h2 class="recipe-title"><%= recipe.title %></h2>
                 
-                    <img 
-                    class="recipe-img"
-                    src="<%= recipe.recipeID < 13500 
-                        ? '/data/recipe-images/recipe-imgfiles/' + recipe.imageName + '.jpg'
-                        : '/' + recipe.imageName %>" 
-                    alt="Image of <%= recipe.title %>">
-
+                    <% if (recipe.recipeID <= 13500) { %>
+                        <img class="recipe-img" src = "/data/recipe-images/recipe-imgfiles/<%= recipe.imageName %>.jpg" alt="Image of <%= recipe.title %>">
+                    <% } else { %>
+                        <img class="recipe-img" src = "/<%= recipe.imageName %>" alt="Image of <%= recipe.title %>">
+                    <% } %>
+                    
                     <p class="ingredient-preview">
                         <% recipe.cleanedIngredients.slice(0,4).forEach(ingredient => { %>
                             <span><%= ingredient %></span>

@@ -305,7 +305,7 @@ app.get('/recipes/', requiresLogin, async (req, res) => {
     return res.render('recipes.ejs', { recipes: filteredRecipes,
         savedRecipes: user.savedRecipes || []
     });
-    });
+});
 
 /**
  * GET /saved
