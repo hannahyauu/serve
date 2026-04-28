@@ -11,7 +11,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&display=swap" rel="stylesheet">
 </head>
-<body class="recipe" >
+<body class="recipe">
     
 <!-- navigation -->
 <%- include("../partials/navbar.ejs") %>
@@ -22,9 +22,9 @@
 
 <!-- FOOD IMAGES AT THIS PATH: data/food-ingredients-and-recipe-dataset-with-images/versions/1/food-images/Food\ Images/ -->
 
-<!-- search bar -->
+<!-- search bar and add recipe button -->
 <div class="search-container">
-    <form method="get" action="/recipes/"> 
+    <form method="get" action="/recipes/">
         <input type="search" 
         id="recipe-search" 
         name="searchInput" 
@@ -56,6 +56,32 @@
             <button type="submit">Apply</button>
         </div>
     </form>
+
+    <button id="add-recipe" class="recipe-button">new recipe</button>
+</div>
+
+<!-- add recipe form -->
+<div class="overlay" id="overlay" style="display:none;">
+    <div class="form-popup" id="recipe-popup" style="display:none;">
+        <form id="new-recipe" method="POST" action="/add-recipe" enctype="multipart/form-data">
+            <h1>enter recipe</h1>
+            <label>recipe name
+                <input type="text" name="recipeName" placeholder="recipe name" required>
+            </label>
+            <label>image
+                <input type="file" name="image" accept=".jpg" class="">
+            </label>
+            <label>ingredients
+                <input type="text" name="ingredients" required>
+            </label>
+            <label>instructions
+                <input type="textarea" rows="10" cols="32" name="instructions" 
+                       placeholder="1. Beat eggs in medium sized bowl..." required>
+            </label>
+            <button type="submit">submit</button>
+            <button type="button" onclick="closeForm('recipe-popup')">close</button>
+        </form>
+    </div>
 </div>
 
 <div class="card-container">
@@ -64,13 +90,14 @@
         <div class="recipeCard">
             <a href="/recipes/<%= recipe.recipeID %>" class="recipe-link">
 
-
                 <div class="recipe-card-content">
                     <h2 class="recipe-title"><%= recipe.title %></h2>
                 
                     <img 
                     class="recipe-img"
-                    src="/data/recipe-images/recipe-imgfiles/<%= recipe.imageName %>.jpg" 
+                    src="<%= recipe.recipeID < 13500 
+                        ? '/data/recipe-images/recipe-imgfiles/' + recipe.imageName + '.jpg'
+                        : '/' + recipe.imageName %>" 
                     alt="Image of <%= recipe.title %>">
 
                     <p class="ingredient-preview">
@@ -103,9 +130,32 @@ document.querySelectorAll('.unlikedHeart').forEach(button => {
     button.addEventListener('click', function () {
         this.classList.toggle('likedHeart');
     });
-
 });
 
+// turn display on for popup and blur overlay
+    function openForm(id) { 
+        document.getElementById(id).style.display = "block";
+        document.getElementById("overlay").style.display = "block";;
+    };
+
+// turn display off for popup and blur overlay
+function closeForm(id) { 
+    document.getElementById(id).style.display = "none";
+    document.getElementById("overlay").style.display = "none";
+}
+
+// get add recipe button (plus sign)
+let addButton = document.getElementById("add-recipe"); 
+
+// open add recipe form if currently closed & vice versa
+addButton.addEventListener("click", function () {
+    let current = document.getElementById("recipe-popup").style.display;
+    if (current == "none") {
+        openForm("recipe-popup");
+    } else {
+        closeForm("recipe-popup");
+    }
+});
 
 const filterToggle = document.querySelector("#filter-toggle");
 const filterMenu = document.querySelector("#filter-menu");

@@ -25,6 +25,8 @@ const { filter } = require('bluebird');
 
 // create and configure the app
 const app = express();
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // Morgan reports the final status code of a request's response
 app.use(morgan('tiny'));
@@ -33,6 +35,10 @@ app.use(cs304.logStartRequest);
 // This handles POST data
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
+
+// file upload with multer
+const multer = require("multer");
+const { count } = require('console');
 
 app.use(cs304.logRequestData);  // tell the user about any request data
 
@@ -47,7 +53,7 @@ const mongoUri = cs304.getMongoUri();
 const USERS = 'users';
 const RECIPES = 'recipes';
 
-// took this from passwords example app?? does this work...
+// took this from passwords example app
 app.use(cookieSession({
   name: 'session',
   keys: [cs304.randomString(20)],
@@ -114,9 +120,8 @@ async function recipesByInventory(username) {
         ).length;
 
         // user has at least 1/4 of required ingredients
-            return (matchCount / ingredients.length) >= 0.25;
+        return (matchCount / ingredients.length) >= 0.25;
     });
-
     return filteredRecipes;
 }
 
@@ -129,9 +134,12 @@ async function getCurrentInventory(username) {
     const db = await Connection.open(mongoUri, 'serve');
     const user = await db.collection(USERS).findOne({username: username});
     const userInventory = user.inventory;
+    
     // add ingredients in users db to list for output
     let userIngredients = [];
+    if (!user || !user.inventory) return []; // if user or inventory don't exist, return empty list
     userIngredients = userInventory.map((x) => x.itemName);
+    
     return user ? userIngredients : []; // return empty list if inventory is empty
 }
 
@@ -145,7 +153,7 @@ function requiresLogin(req, res, next) {
     if (!req.session.loggedIn) {
         req.flash('error', 'this page requires you to be logged in.');
         return res.redirect("/");
-    } else { next(); }
+    } else { next() };
 };
 
 function isVegan(recipe) {
@@ -226,6 +234,7 @@ app.get('/recipes/', requiresLogin, async (req, res) => {
     }
 
     let filteredRecipes = await recipesByInventory(username);
+    console.log('got filtered recipes:', filteredRecipes.length);
 
     // if someone searches something, filter recipe list
     if (searchInput) {
@@ -241,7 +250,7 @@ app.get('/recipes/', requiresLogin, async (req, res) => {
         });
     }
 
-            if (selectedFilters.includes("vegan")) {
+        if (selectedFilters.includes("vegan")) {
             filteredRecipes = filteredRecipes.filter(isVegan);
         }
 
@@ -257,7 +266,7 @@ app.get('/recipes/', requiresLogin, async (req, res) => {
             filteredRecipes = filteredRecipes.filter(isHalal);
         }
 
-    // grab users username to retrieve saved recipes and pass to recipes page
+    // grab user's username to retrieve saved recipes and pass to recipes page
     // this will render red / grey hearts 
     const db = await Connection.open(mongoUri, 'serve');
     const user = await db.collection(USERS).findOne({ username: username });
@@ -272,21 +281,36 @@ app.get('/recipes/', requiresLogin, async (req, res) => {
 }
 });
 
-// for search
+// finds a specific user's saved recipes
 app.get('/saved', requiresLogin, async (req, res) => {
     // find that users saved recipes
     const db = await Connection.open(mongoUri, 'serve');
     const user = await db.collection(USERS).findOne({username: req.session.username});
-    const savedRecipes = await db.collection('recipes').find({
-    recipeID: { $in: user.savedRecipes }
-    }).toArray();
+    const savedRecipes = await db.collection('recipes')
+                                 .find({ recipeID: { $in: user.savedRecipes }})
+                                 .toArray();
     
     // consider case user has no saved recipes
     return res.render('recipes.ejs',{
                         recipes: savedRecipes,
-                        savedRecipes: savedRecipes || []
-                    }
-    )
+                        savedRecipes: user.savedRecipes || []
+                    })
+});
+
+// finds a specific user's created recipes
+app.get('/created', requiresLogin, async (req, res) => {
+    // find that users created recipes
+    const db = await Connection.open(mongoUri, 'serve');
+    const user = await db.collection(USERS).findOne({ username: req.session.username });
+    const createdRecipes = await db.collection('recipes')
+                                   .find({ recipeID: { $in: user.createdRecipes }})
+                                   .toArray();
+    
+    // consider case user has no created recipes
+    return res.render('recipes.ejs',{
+                        recipes: createdRecipes,
+                        savedRecipes: user.savedRecipes || []  // needed for heart rendering
+                    })
 });
 
 // user saves or unsaves recipes 
@@ -307,7 +331,6 @@ app.post('/save-recipe', requiresLogin, async (req, res) => {
             { $addToSet: { savedRecipes: recipeID } }
         );
     }
-
     res.redirect('back'); // might also make an ajax version for alpha
 });
 
@@ -317,16 +340,115 @@ app.get('/recipes/:recipeID', async (req, res) => {
     const db = await Connection.open(mongoUri, 'serve');
     const recipe = await db.collection(RECIPES).findOne({recipeID: parseInt(recipeID)});
 
-    //render flashes later
+    // render flashes later
     if (recipe === null) {
         req.flash('error', "There is no recipe with that recipe ID!");
     }
 
-
     return res.render('recipeSpecific.ejs',
                         {recipeID,
-                            recipe
-                        });
+                            recipe });
+});
+
+// ==========================================================================
+
+// create recipe/upload image file endpoints
+const UPLOADS = 'uploads';
+
+/**
+ * Returns a string like 123456 for 56 seconds past 12:34. 
+ * If the argument is omitted, the current time is used.
+ * Function from File Upload reading
+ * @param {Date} dateObj optional date object
+ * @returns a String showing the time, i.e. '123456'
+ */
+function timeString(dateObj) {
+    if( !dateObj) {
+        dateObj = new Date(); 
+    }
+    // convert val to two-digit string
+    d2 = (val) => val < 10 ? '0'+val : ''+val;
+    let hh = d2(dateObj.getHours())
+    let mm = d2(dateObj.getMinutes())
+    let ss = d2(dateObj.getSeconds())
+    return hh+mm+ss
+}
+
+/**
+ * Checks if viewerId is the same as ownerId
+ * @param {String} viewerId 
+ * @param {String} ownerId 
+ * @returns true if viewerId is the same as ownerId
+ */
+function isAuthorizedToView(viewerId, ownerId) {
+    console.log('auth?', viewerId, ownerId);
+    return viewerId === ownerId;
+}
+
+// set image storage to disk
+let storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, UPLOADS)
+  },
+  filename: function (req, file, cb) {
+      let parts = file.originalname.split('.');
+      let ext = parts[parts.length-1];
+      let hhmmss = timeString();
+      cb(null, file.fieldname + '-' + hhmmss + '.' + ext);
+  }
+});
+
+// set up file size limit and assign storage
+let upload = multer({ storage: storage,
+                      // file size in bytes
+                      limits: {fileSize: 1_000_000 }});
+
+// starting number for recipeIDs
+let COUNTER = 13502;
+
+// form to add new recipe takes recipe name, image file, ingredients list, and instructions
+app.post('/add-recipe', requiresLogin, upload.single('image'), async (req, res) => {
+    const username = req.session.username;
+    
+    // log info
+    console.log('file', req.file);
+    console.log('uploaded data', req.body);
+    
+    // get recipe info from form
+    const recipeName = req.body.recipeName;
+    let imgFilePath = req.file.path;
+    const ingredients = req.body.ingredients.split(',').map(s => s.trim()); // split on commas
+    const instructions = req.body.instructions;
+
+    // access database
+    const db = await Connection.open(mongoUri, 'serve');
+    const users = db.collection(USERS);
+    const recipes = db.collection(RECIPES);
+
+    const result = await db.collection(UPLOADS)
+          .insertOne({title: recipeName.split(' ').join(''),
+                      owner: username,
+                      path: '/uploads/'+req.file.filename});
+    console.log('insertOne result', result);
+
+    // ID for new recipe is index of the last document in recipes collection +1
+    COUNTER++;
+    let recipeID = COUNTER;
+
+    // upsert recipe into recipe collection
+    let recipe = await recipes.insertOne( { cleanedIngredients: ingredients,
+                                            imageName: imgFilePath,
+                                            ingredients: ingredients,
+                                            instructions: instructions, 
+                                            recipeID: recipeID,
+                                            title: recipeName } );
+    
+    // add recipeID into user's createdRecipes list
+    let userUpdate = await users.updateOne( 
+                                    { username: username },
+                                    { $addToSet: { createdRecipes: recipeID } });
+
+    return res.redirect(`/recipes/${recipeID}`);
 });
 
 // ==========================================================================
@@ -336,7 +458,7 @@ const storageLocations = ['fridge', 'freezer', 'pantry'];
 
 // renders inventory page with user's ingredients
 app.get('/inventory/:location', requiresLogin, async (req, res) => {
-    // get storage location (not functional yet)
+    // get storage location
     const location = req.params.location;
     const user = req.session.username; 
 
@@ -347,28 +469,34 @@ app.get('/inventory/:location', requiresLogin, async (req, res) => {
     let inventory = userDoc?.inventory ?? [];
     let expiringItems = [];
 
-    // expiration date notifications
-    if (inventory != []) {
+    // list out items in the specified storage location
+    let specificInv = [];
+    if ( inventory.length > 0 ) {
         inventory.forEach(item => {
+            if ( item.location === location ) { specificInv.push(item); }
+    })};
+
+    // expiration date notifications
+    if (specificInv.length > 0) {
+        specificInv.forEach(item => {
             if (!item.expiration) return;
 
             let currDate = new Date();
             let expirDate = new Date(item.expiration);
-            let dayDiff = expirDate.getDate() - currDate.getDate() + 1;
-
-            // if current date is 3 days or less away from expiration date
-            let dateCompare = expirDate.getFullYear() === currDate.getFullYear() &&
-                 expirDate.getMonth() === currDate.getMonth() && dayDiff <= 3 && dayDiff >= 0;
+            let dayDiff = (expirDate.getTime() - currDate.getTime()) / 86400000;
             
             // flash expiration notifications
             if (dayDiff < 0) {
                 expiringItems.push(`${item.itemName} is expired`);
             } else if (dayDiff <= 3) {
-                expiringItems.push(`${item.itemName} expires in ${dayDiff} day(s)`);
+                expiringItems.push(`${item.itemName} expires in ${Math.round(dayDiff)} day(s)`);
             }
         });
     }
-    return res.render('inventory.ejs', {locations: storageLocations, ingredients: inventory, expiringItems: expiringItems});
+    return res.render('inventory.ejs', {locations: storageLocations, 
+                                        location: location, 
+                                        ingredients: specificInv, 
+                                        expiringItems: expiringItems});
 });
 
 // inserts an ingredient into the fridge
@@ -376,8 +504,10 @@ app.post('/add-item', requiresLogin, async (req, res) => {
     
     // get item info from form
     const itemName = req.body.itemName;
-    const imgFile = itemName[0].toUpperCase() + itemName.slice(1) + '.png';
+    let itemId; // need to generate the next ID number in the sequence for this OR maybe not???
 
+    const imgFile = itemName[0].toUpperCase() + itemName.slice(1) + '.png';
+    const location = req.body.chosenLocation;
     const expiration = req.body.expiration;
     const amount = req.body.amount;
 
@@ -389,6 +519,7 @@ app.post('/add-item', requiresLogin, async (req, res) => {
                 { username: req.session.username },
                 { $addToSet: { inventory: { itemName: itemName,  
                                             imgFile: imgFile,
+                                            location: location,
                                             expiration: expiration, 
                                             amount: amount} } },
                 { upsert: true });
@@ -400,6 +531,7 @@ app.post('/add-item', requiresLogin, async (req, res) => {
 app.post('/delete-item/:itemId', requiresLogin, async (req, res) => {
     // get specific item to delete from shelf
     const itemId = req.params.itemId;
+    const username = req.session.username;
 
     // access database
     const db = await Connection.open(mongoUri, 'serve');
@@ -407,10 +539,20 @@ app.post('/delete-item/:itemId', requiresLogin, async (req, res) => {
 
     // pull specified item out of user inventory
     let result = await users.updateOne(
-                { username: req.session.username },
+                { username: username },
                 { $pull: { inventory: { itemName: itemId } } });
 
-    return res.redirect('/inventory/fridge');
+    // get current location for precise redirect (fridge, freezer, or pantry)
+    let userDoc = users.findOne({username: username});
+    let userInv = userDoc?.inventory ?? [];
+    
+    if (userInv) {
+        let userItem = userInv.find(item => item.itemName === itemId);
+        let currLocation = userItem.location; 
+        return res.redirect(`/inventory/${currLocation}`);
+    } else {
+        return res.redirect('/inventory/fridge');
+    }
 });
 
 
@@ -442,7 +584,7 @@ app.get('/profile', requiresLogin, (req, res) => {
         req.flash('error', 'You are not logged in - please do so.');
         return res.redirect("/");
     }
-    return res.render('profile.ejs', { username: req.session.username});
+    return res.render('profile.ejs', { username: req.session.username });
 });
 
 // renders log in/register page
@@ -476,6 +618,7 @@ app.post('/signup', async (req, res) => {
             hash: hash,
             inventory: [],
             savedRecipes: [],
+            createdRecipes: []
         });
 
         // on successful registration, create session with given username
@@ -536,6 +679,21 @@ app.post('/logout', (req, res) => {
 });
 
 // ==========================================================================
+
+// postlude
+
+// for file upload error handling (from File Upload reading)
+app.use((err, req, res, next) => {
+    console.log('error', err);
+    if(err.code === 'LIMIT_FILE_SIZE') {
+        console.log('file too big')
+        req.flash('error', 'file too big')
+        res.redirect('/')
+    } else {
+        console.error(err.stack)
+        res.status(500).send('Something broke!')
+    }
+})
 
 const serverPort = cs304.getPort(8080);
 

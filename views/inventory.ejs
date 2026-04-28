@@ -35,44 +35,51 @@
 <% } %>
 
 <!-- location select -->
-<form method="GET">
-    <p><label>
-        <select required name="location">
-            <% locations.forEach( (location, index) => { %>
-            <option value="<%= index %>"><%= location %></option>
-            <% }) %>
-        </select>
-    </label></p>
-</form>
+
+<div class="button-bar">
+    <div class="button-links">
+        <a href="/inventory/fridge" class="nav-btn">fridge</a>
+        <a href="/inventory/freezer" class="nav-btn">freezer</a>
+        <a href="/inventory/pantry" class="nav-btn">pantry</a>
+    </div>
+</div>
 
 <!-- render list of current ingredients in users inventory -->
-<div class="shelf" id="shelf1">
+<div class="shelf">
     <% if (ingredients && ingredients.length > 0) { %>
         <% ingredients.forEach( (ingredient) => { %>
-        <span class="ingredient-container">
-            <img src="/data/ingredient-images/<%= ingredient.imgFile %>" 
-            alt="Image of <%= ingredient.itemName %>">
-            <h2><%= ingredient.itemName %></h2>
-            <p><b>expires:</b> <%= ingredient.expiration %></p>
-            <p><b>amount:</b> <%= ingredient.amount %></p>
-            
-            <form action="/delete-item/<%= ingredient.itemName %>" method="POST">
-                <button type="submit" class="delete-btn">delete</button>
-            </form>
-        </span>
+            <% if (ingredient.location === location) { %>
+                <span class="ingredient-container">
+                    <img src="/data/ingredient-images/<%= ingredient.imgFile %>" 
+                    alt="Image of <%= ingredient.itemName %>">
+                    <h2><%= ingredient.itemName %></h2>
+                    <p><b>expires:</b> <%= ingredient.expiration %></p>
+                    <p><b>amount:</b> <%= ingredient.amount %></p>
+                    
+                    <form action="/delete-item/<%= ingredient.itemName %>" method="POST">
+                        <button type="submit" class="delete-btn">delete</button>
+                    </form>
+                </span>
+            <% } %>
         <% }) %>
     <% } %>
     <button id="add-ingredient" class="add-button">+</button>
 </div>
 
-<!-- button for user to add ingredients to their inventory  -->
-    
+<!-- form for adding an ingredient into inventory. takes name, location, expiration, amount  -->
 <div class="overlay" id="overlay" style="display:none;">
     <div class="form-popup" id="item-popup" style="display:none;">
         <form id="ingredient-form" action="/add-item" method="POST">
             <h1>enter item</h1>
             <label>item name
                 <input type="text" name="itemName" placeholder="item name" required>
+            </label>
+            <label>storage location
+                <select name="chosenLocation" required>
+                    <% locations.forEach( (location, index) => { %>
+                        <option value="<%= location %>"><%= location %></option>
+                    <% }) %>
+                </select>
             </label>
             <label>expiration date
                 <input type="date" name="expiration" placeholder="expiration date">
@@ -81,7 +88,7 @@
                 <input type="text" name="amount" placeholder=1>
             </label>
             <button type="submit">submit</button>
-            <button type="button" onclick="closeForm()">close</button>
+            <button type="button" onclick="closeForm('item-popup')">close</button>
         </form>
     </div>
 </div>
@@ -90,17 +97,19 @@
 <script src="/main.js"></script>
 
 <script>
-    // open/close ingredient form popup
-    function openForm() { 
-        document.getElementById("item-popup").style.display = "block";
+    // turn display on for popup and blur overlay
+    function openForm(id) { 
+        document.getElementById(id).style.display = "block";
         document.getElementById("overlay").style.display = "block";;
     };
 
-    function closeForm() { 
-        document.getElementById("item-popup").style.display = "none";
+    // turn display off for popup and blur overlay
+    function closeForm(id) { 
+        document.getElementById(id).style.display = "none";
         document.getElementById("overlay").style.display = "none";
     }
     
+    // get add ingredient button (large plus sign)
     let element = document.getElementById("add-ingredient");
     
     // open form if currently closed & vice versa
@@ -108,9 +117,9 @@
         let current = document.getElementById("item-popup").style.display;
         console.log(current);
         if (current == "none") {
-            openForm();
+            openForm("item-popup");
         } else {
-            closeForm();
+            closeForm("item-popup");
         }
     });
 </script>
