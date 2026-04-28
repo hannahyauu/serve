@@ -330,6 +330,27 @@ app.get('/saved', requiresLogin, async (req, res) => {
 });
 
 /**
+ * GET /created
+ * Displays a specific user's created recipes
+ * Passes saved recipe IDs for heart rendering.
+ */
+app.get('/created', requiresLogin, async (req, res) => {
+    // find that users created recipes
+    const db = await Connection.open(mongoUri, 'serve');
+    const user = await db.collection(USERS).findOne({ username: req.session.username });
+    const savedRecipeIDs = user.savedRecipes || [];
+    const createdRecipes = await db.collection('recipes')
+                                   .find({ recipeID: { $in: user.createdRecipes }})
+                                   .toArray();
+    
+    // consider case user has no created recipes
+    return res.render('recipes.ejs',{
+                        recipes: createdRecipes,
+                        savedRecipes: savedRecipeIDs  // needed for heart rendering
+                    })
+});
+
+/**
  * POST /save-recipe
  * Toggles a recipe in the user's savedRecipes list.
  * - If already saved → remove
