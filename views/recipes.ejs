@@ -24,11 +24,12 @@
 
 <!-- search bar -->
 <div class="search-container">
-    <form method="get" action="/recipes/"> 
-        <input type="search" 
-        id="recipe-search" 
-        name="searchInput" 
-        placeholder="search for a recipe..." 
+    <form method="get" action="/recipes/" > 
+        <label for="recipe-search" class="sr-only">Search recipes</label>
+    <input type="search" 
+       id="recipe-search" 
+       name="searchInput" 
+       placeholder="search for a recipe..." 
         style="color: white; font-size: 20px; padding: 5px;" />
     <button type="button" id="filter-toggle">filter</button>
 
@@ -87,7 +88,7 @@
                 <input type="hidden" name="recipeID" value="<%= recipe.recipeID %>">
                 <button 
                     type="submit" 
-                    class="heart-btn <%= (savedRecipes || []).includes(recipe.recipeID) ? 'likedHeart' : 'unlikedHeart' %>"
+                    class="heart-btn <%= (savedRecipes || []).map(Number).includes(String(recipe.recipeID)) ? 'likedHeart' : 'unlikedHeart' %>"
                 >
                     ♥
                 </button>
@@ -99,11 +100,11 @@
 
 <script>
 // if click on heart button, turn to red for saved, vice versa.
-document.querySelectorAll('.unlikedHeart').forEach(button => {
+document.querySelectorAll('.heart-btn').forEach(button => {
     button.addEventListener('click', function () {
         this.classList.toggle('likedHeart');
+        this.classList.toggle('unlikedHeart');
     });
-
 });
 
 
