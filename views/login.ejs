@@ -14,8 +14,6 @@
 
 <body class="page">
 
-<!-- navigation -->
-<%- include ("../partials/navbar.ejs") %>
 
 <!-- error flashing -->
 <%- include ("../partials/flashing.ejs") %>
@@ -33,16 +31,19 @@
 </form> -->
 
 <!-- login form -->
-<h1>returning users: log in</h1>
-<form action="/login" method="POST" id="login">
-    <label> username
-        <input type="text" name="username" placeholder="username">
-    </label>
-    <label> password
-        <input type="password" name="password" placeholder="********">
-    </label>
-    <button type="submit">log in</button>
-</form>
+
+<div class="start-form-container">
+    <form action="/login" method="POST" id="start-form">
+        <h2 class="form-title">returning users</h2>
+        <label> username
+            <input type="text" name="username" placeholder="username">
+        </label>
+        <label> password
+            <input type="password" name="password" placeholder="********">
+        </label>
+        <button type="submit">log in</button>
+    </form>
+</div>
 
 <!-- load local js -->
 <script src="/main.js"></script>

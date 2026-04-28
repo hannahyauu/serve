@@ -15,13 +15,12 @@
 <body class="page">
 
 <!-- navigation -->
-<%- include ("../partials/navbar.ejs") %>
 
 <!-- error flashing -->
 <%- include ("../partials/flashing.ejs") %>
 
 <!-- signup/registration form --> 
-<h1>new users: sign up</h1> 
+<!-- <h1>new users: sign up</h1> 
 <form action="/signup" method="POST" id="signup">
     <label> username
         <input type="text" name="username" placeholder="username">
@@ -30,7 +29,20 @@
         <input type="password" name="password" placeholder="********">
     </label>
     <button type="submit">sign up</button>
-</form>
+</form> -->
+
+<div class="start-form-container">
+    <form action="/signup" method="POST" id="start-form"">
+        <h2 class="form-title">new users</h2>
+        <label> username
+        <input type="text" name="username" placeholder="username">
+        </label>
+        <label> password
+            <input type="password" name="password" placeholder="********">
+        </label>
+        <button type="submit">sign up</button>
+    </form>
+</div>
 
 <!-- login form
 <h1>returning users: log in</h1>

@@ -18,7 +18,21 @@
 <%- include("../partials/navbar.ejs") %>
 
 <!-- error flashing -->
-<%- include ("../partials/flashing.ejs") %>
+<!-- <%- include ("../partials/flashing.ejs") %> -->
+
+<% if (expiringItems && expiringItems.length > 0) { %>
+    <details class="expiration-flash">
+        <summary>
+            <strong><%= expiringItems.length %></strong> of your ingredients are close to expiring!
+        </summary>
+
+        <ul>
+            <% expiringItems.forEach(item => { %>
+                <li><%= item %></li>
+            <% }) %>
+        </ul>
+    </details>
+<% } %>
 
 <!-- location select -->
 <form method="GET">

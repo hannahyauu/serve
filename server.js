@@ -66,6 +66,20 @@ async function getAllRecipes() {
     return db.collection(RECIPES).find({}).toArray();
 }
 
+
+function normalizeFractions(str) {
+    return str
+        .replace(/½/g, "1/2")
+        .replace(/¼/g, "1/4")
+        .replace(/¾/g, "3/4");
+}
+
+function getAmount(ingredient) {
+    const clean = normalizeFractions(ingredient);
+    const match = clean.match(/^[\d\/\.]+/);
+    return match ? match[0] : null;
+}
+
 function matchesIngredient(recipeIngredient, userIngredient) {
     return recipeIngredient.includes(userIngredient) ||
            userIngredient.includes(recipeIngredient);
@@ -170,6 +184,20 @@ function isGlutenFree(recipe) {
     );
 }
 
+function isHalal(recipe) {
+    const nonHalal = [
+        "pork", "bacon", "ham", "sausage",
+        "wine", "beer", "bourbon", "rum", "vodka", "whiskey", "alcohol",
+        "lard"
+    ];
+
+    return !recipe.cleanedIngredients.some(ingredient =>
+        nonHalal.some(bad =>
+            ingredient.toLowerCase().includes(bad)
+        )
+    );
+}
+
 // ==========================================================================
 
 // main page. just has links to two other pages
@@ -221,6 +249,10 @@ app.get('/recipes/', requiresLogin, async (req, res) => {
 
         if (selectedFilters.includes("glutenFree")) {
             filteredRecipes = filteredRecipes.filter(isGlutenFree);
+        }
+
+        if (selectedFilters.includes("halal")) {
+            filteredRecipes = filteredRecipes.filter(isHalal);
         }
 
     // grab users username to retrieve saved recipes and pass to recipes page
@@ -307,10 +339,13 @@ app.get('/inventory/:location', requiresLogin, async (req, res) => {
     const users = db.collection(USERS);
     let userDoc = await users.findOne({username: user});
     let inventory = userDoc?.inventory ?? [];
+    let expiringItems = [];
 
     // expiration date notifications
     if (inventory != []) {
         inventory.forEach(item => {
+            if (!item.expiration) return;
+
             let currDate = new Date();
             let expirDate = new Date(item.expiration);
             let dayDiff = expirDate.getDate() - currDate.getDate() + 1;
@@ -320,14 +355,14 @@ app.get('/inventory/:location', requiresLogin, async (req, res) => {
                  expirDate.getMonth() === currDate.getMonth() && dayDiff <= 3 && dayDiff >= 0;
             
             // flash expiration notifications
-            if ( dateCompare ) {
-                req.flash('expiration', `${item.itemName} is expiring in ${dayDiff} day(s)!`)
-            } else if ( dayDiff < 0 ) {
-                req.flash('expiration', `${item.itemName} is expired!`)
+            if (dayDiff < 0) {
+                expiringItems.push(`${item.itemName} is expired`);
+            } else if (dayDiff <= 3) {
+                expiringItems.push(`${item.itemName} expires in ${dayDiff} day(s)`);
             }
         });
     }
-    return res.render('inventory.ejs', {locations: storageLocations, ingredients: inventory});
+    return res.render('inventory.ejs', {locations: storageLocations, ingredients: inventory, expiringItems: expiringItems});
 });
 
 // inserts an ingredient into the fridge

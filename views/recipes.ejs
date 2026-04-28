@@ -30,7 +30,31 @@
         name="searchInput" 
         placeholder="search for a recipe..." 
         style="color: white; font-size: 20px; padding: 5px;" />
-        <button class="filter-btn">filter</button>
+    <button type="button" id="filter-toggle">filter</button>
+
+        <div id="filter-menu" class="filter-menu hidden">
+            <label>
+                <input type="checkbox" name="filters" value="vegan">
+                Vegan
+            </label>
+
+            <label>
+                <input type="checkbox" name="filters" value="vegetarian">
+                Vegetarian
+            </label>
+
+            <label>
+                <input type="checkbox" name="filters" value="glutenFree">
+                Gluten-free
+            </label>
+
+            <label>
+                <input type="checkbox" name="filters" value="halal">
+                Halal
+            </label>
+
+            <button type="submit">Apply</button>
+        </div>
     </form>
 </div>
 
@@ -68,6 +92,15 @@ document.querySelectorAll('.unlikedHeart').forEach(button => {
     });
 
 });
+
+
+const filterToggle = document.querySelector("#filter-toggle");
+const filterMenu = document.querySelector("#filter-menu");
+
+filterToggle.addEventListener("click", () => {
+    filterMenu.classList.toggle("hidden");
+});
+
 </script>
 
 <!-- load local js -->
