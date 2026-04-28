@@ -20,14 +20,17 @@
 <!-- error flashing -->
 <%- include ("../partials/flashing.ejs") %>
 
-<h1>username/profile picture here</h1>
-<p>other information here</p>
+<h1><%= username %></h1>
+<div class="nav-links">
+    <a href="/saved" class="nav-btn">saved recipes</a>
+    <a href="/created" class="nav-btn">created recipes</a>
+</div>
 
-<p><a href="/saved" class="nav-btn">saved recipes</a></p> <!-- source ~/.cs304env.sh -->
-
-<form id="logout" action="/logout" method="POST">
-    <button type="submit">log out</button>
-</form>
+<div class="nav-links">
+    <form id="logout" action="/logout" method="POST">
+        <button type="submit" class="start-btn">log out</button>
+    </form>
+</div>
 
 <!-- load local js -->
 <script src="/main.js"></script>

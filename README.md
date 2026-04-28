@@ -21,4 +21,6 @@ DIRECTIONS FOR USE
 4. Use the search bar and filters to refine results.
 5. Click the heart icon to save or unsave recipes.
 6. View saved recipes on the “Saved” page.
-7. Manage your inventory through the inventory page.
+7. Create a recipe on any of the recipe pages.
+8. View created recipes on the “Created” page.
+9. Manage your inventory through the inventory page.
