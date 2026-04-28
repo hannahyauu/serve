@@ -39,6 +39,7 @@ app.use(bodyParser.json());
 // file upload with multer
 const multer = require("multer");
 const { count } = require('console');
+app.use('/uploads', express.static('uploads'));
 
 app.use(cs304.logRequestData);  // tell the user about any request data
 
@@ -477,9 +478,10 @@ app.post('/add-recipe', requiresLogin, upload.single('image'), async (req, res) 
                       path: '/uploads/'+req.file.filename});
     console.log('insertOne result', result);
 
-    // ID for new recipe is index of the last document in recipes collection +1
-    COUNTER++;
-    let recipeID = COUNTER;
+    // ID for new recipe is the number of documents in recipes collection +1
+    let recipeID = await db.collection(RECIPES).countDocuments();
+    recipeID++;
+    console.log(recipeID);
 
     // upsert recipe into recipe collection
     let recipe = await recipes.insertOne( { cleanedIngredients: ingredients,

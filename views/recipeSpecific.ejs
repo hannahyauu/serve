@@ -24,9 +24,10 @@
 <div class="recipe-text" style = "color: #11153f; text-shadow: 15em;">
     <h1><%= recipe.title %></h1>
         <% if (recipe.recipeID <= 13500) { %>
-            <img src = "/data/recipe-images/recipe-imgfiles/<%= recipe.imageName %>.jpg" alt="Image of <%= recipe.title %>">
+            <img src = "/data/recipe-images/recipe-imgfiles/<%= recipe.imageName %>.jpg" 
+                 alt="Image of <%= recipe.title %>" width="300">
         <% } else { %>
-            <img src = "/<%= recipe.imageName %>" alt="Image of <%= recipe.title %>">
+            <img src = "/<%= recipe.imageName %>" alt="Image of <%= recipe.title %>" width="300">
         <% } %>
     <p><strong>Ingredients:</strong></p style="font-size: 20px;">
     <ul> <% recipe.cleanedIngredients.forEach(ingredient =>{ %>
