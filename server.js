@@ -448,7 +448,11 @@ let upload = multer({ storage: storage,
 // starting number for recipeIDs
 let COUNTER = 13500; // DON'T TOUCH THIS LOL
 
-// form to add new recipe takes recipe name, image file, ingredients list, and instructions
+/**
+ * POST /add-recipe
+ * form takes recipe name, image file, ingredients list, and instructions
+ * adds recipe to user's createdRecipes list with a unique ID number
+ */
 app.post('/add-recipe', requiresLogin, upload.single('image'), async (req, res) => {
     const username = req.session.username;
     
@@ -500,7 +504,11 @@ app.post('/add-recipe', requiresLogin, upload.single('image'), async (req, res) 
 // inventory pages
 const storageLocations = ['fridge', 'freezer', 'pantry'];
 
-// renders inventory page with user's ingredients
+/**
+ * GET /inventory/:location
+ * gets user's inventory per storage location
+ * renders items in that storage location, calculates expiration date notifications
+ */
 app.get('/inventory/:location', requiresLogin, async (req, res) => {
     // get storage location
     const location = req.params.location;
@@ -543,7 +551,11 @@ app.get('/inventory/:location', requiresLogin, async (req, res) => {
                                         expiringItems: expiringItems});
 });
 
-// inserts an ingredient into the fridge
+/**
+ * POST /add-item
+ * inserts an ingredient (with the given form info) into user's inventory
+ * redirects to fridge
+ */
 app.post('/add-item', requiresLogin, async (req, res) => {
     
     // get item info from form
@@ -567,7 +579,11 @@ app.post('/add-item', requiresLogin, async (req, res) => {
     return res.redirect('/inventory/fridge');
 });
 
-// deletes an item from the fridge
+/**
+ * POST /delete-item
+ * deletes the specified item from the fridge using itemId and currLocation
+ * redirects to the deleted item's location
+ */
 app.post('/delete-item', requiresLogin, async (req, res) => {
     // get specific item to delete from shelf
     const itemId = req.body.itemId;
@@ -602,16 +618,21 @@ app.get('/profile', requiresLogin, (req, res) => {
     return res.render('profile.ejs', { username: req.session.username });
 });
 
-// renders log in/register page
+// log in page
 app.get('/login', async (req, res) => { 
     return res.render('login.ejs');
 });
 
+// sign up page
 app.get('/signup', async (req, res) => { 
     return res.render('signup.ejs');
 });
 
-// process sign up form submission: creates user in users collection
+/**
+ * POST /signup
+ * creates user with submitted username/password 
+ * inserts into users collection
+ */
 app.post('/signup', async (req, res) => {
     try {
         const username = req.body.username;
@@ -649,7 +670,10 @@ app.post('/signup', async (req, res) => {
     }
 });
 
-// process login form submission
+/**
+ * POST /login
+ * checks username and password match, then logs user in
+ */
 app.post("/login", async (req, res) => {
     try {
         const username = req.body.username;
@@ -680,7 +704,10 @@ app.post("/login", async (req, res) => {
     }
 });
 
-// log out if currently logged in, flashes error otherwise
+/**
+ * POST /logout
+ * log out if currently logged in, flashes error otherwise
+ */
 app.post('/logout', (req, res) => {
     if (req.session.username) {
         req.session.username = null;
