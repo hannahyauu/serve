@@ -66,33 +66,31 @@ async function getAllRecipes() {
     return db.collection(RECIPES).find({}).toArray();
 }
 
-
-function normalizeFractions(str) {
-    return str
-        .replace(/½/g, "1/2")
-        .replace(/¼/g, "1/4")
-        .replace(/¾/g, "3/4");
-}
-
-function getAmount(ingredient) {
-    const clean = normalizeFractions(ingredient);
-    const match = clean.match(/^[\d\/\.]+/);
-    return match ? match[0] : null;
-}
-
+/**
+ * Checks if two ingredient strings roughly match.
+ * Uses substring matching in both directions to allow flexibility
+ * (e.g., "chicken breast" matches "chicken").
+ * @param {string} recipeIngredient
+ * @param {string} userIngredient
+ * @returns {boolean}
+ */
 function matchesIngredient(recipeIngredient, userIngredient) {
     return recipeIngredient.includes(userIngredient) ||
            userIngredient.includes(recipeIngredient);
 }
 
 /**
- * Finds all recipes with users ingredients in users inventory
- * @param {String} username
- * @returns list of recipes that contain ingredient
+ * Returns recipes that partially match a user's inventory.
+ * A recipe is included if at least 25% of its ingredients
+ * appear in the user's inventory.
+ *
+ * @param {string} username
+ * @returns {Array<Object>} filtered recipes
  */
-async function recipesByInventory(username) {
-    const userInventory = await getCurrentInventory(username);
+async function recipesByInventory(userInv) {
+    const userInventory = userInv.map(item => item.itemName);
     const db = await Connection.open(mongoUri, 'serve');
+
     const recipes = await db.collection(RECIPES)
     .find({
         title: { $ne: null },
@@ -107,6 +105,7 @@ async function recipesByInventory(username) {
 
             if (ingredients.length === 0) return false;
 
+            // count how many recipe ingredients appear in user inventory
             const matchCount = ingredients.filter(ingredient =>
             userInventory.some(item =>
                 matchesIngredient(ingredient.toLowerCase(), item.toLowerCase())
@@ -121,8 +120,9 @@ async function recipesByInventory(username) {
 }
 
 /**
- * For future use -- gets inventory of currently logged in user
- * @returns list of ingredients in inventory
+ * Retrieves the list of ingredient names in a user's inventory.
+ * @param {string} username
+ * @returns {Array<string>} list of ingredient names
  */
 async function getCurrentInventory(username) {
     // find user in db 
@@ -148,6 +148,10 @@ function requiresLogin(req, res, next) {
     } else { next(); }
 };
 
+/**
+ * Checks if recipe is vegan
+ * @param recipe recipe document
+ */
 function isVegan(recipe) {
     const nonVegan = [
         "chicken", "beef", "pork", "fish", "shrimp",
@@ -162,6 +166,10 @@ function isVegan(recipe) {
     );
 }
 
+/**
+ * Checks if recipe is vegetarian
+ * @param recipe recipe document
+ */
 function isVegetarian(recipe) {
     const nonVegetarian = [
         "chicken", "beef", "pork", "fish", "shrimp",
@@ -175,6 +183,10 @@ function isVegetarian(recipe) {
     );
 }
 
+/**
+ * Checks if recipe is gluten free
+ * @param recipe recipe document
+ */
 function isGlutenFree(recipe) {
     const gluten = [
         "flour", "wheat", "bread", "pasta", "noodle", "barley"
@@ -185,6 +197,10 @@ function isGlutenFree(recipe) {
     );
 }
 
+/**
+ * Checks if recipe is halal
+ * @param recipe recipe document
+ */
 function isHalal(recipe) {
     const nonHalal = [
         "pork", "bacon", "ham", "sausage",
@@ -211,21 +227,36 @@ app.get('/', (req, res) => {
 
 // ==========================================================================
 
-// recipe pages
+/**
+ * GET /recipes
+ * Displays recipe cards filtered by:
+ * - user inventory (base filter)
+ * - search query (title + ingredients)
+ * - dietary filters (vegan, vegetarian, etc.)
+ *
+ * Also passes user's saved recipe IDs to render heart states.
+ */
 app.get('/recipes/', requiresLogin, async (req, res) => {
-    try { 
     const searchInput = req.query.searchInput;
     // const recipes = await getAllRecipes();
     const username = req.session.username;
     const filters = req.query.filters;
     let selectedFilters = [];
 
+    const db = await Connection.open(mongoUri, 'serve');
+
+    const user = await db.collection(USERS).findOne({
+        username: username
+    });
+
+    let filteredRecipes = await recipesByInventory(user.inventory || []);
+
     // if user selected any filters
     if (filters) {
         selectedFilters = Array.isArray(filters) ? filters : [filters];
     }
 
-    let filteredRecipes = await recipesByInventory(username);
+    // let filteredRecipes = await recipesByInventory(username);
 
     // if someone searches something, filter recipe list
     if (searchInput) {
@@ -259,37 +290,43 @@ app.get('/recipes/', requiresLogin, async (req, res) => {
 
     // grab users username to retrieve saved recipes and pass to recipes page
     // this will render red / grey hearts 
-    const db = await Connection.open(mongoUri, 'serve');
-    const user = await db.collection(USERS).findOne({ username: username });
+    // const db = await Connection.open(mongoUri, 'serve');
+    // const user = await db.collection(USERS).findOne({ username: username });
 
     // console.log('filteredRecipes', filteredRecipes[0]);
     return res.render('recipes.ejs', { recipes: filteredRecipes,
         savedRecipes: user.savedRecipes || []
     });
-} catch (err) {
-    console.error("RECIPES PAGE ERROR:", err);
-        res.status(500).send(err.message);
-}
-});
+    });
 
-// for search
+/**
+ * GET /saved
+ * Displays only recipes the user has saved.
+ * Also passes saved recipe IDs for heart rendering.
+ */
 app.get('/saved', requiresLogin, async (req, res) => {
     // find that users saved recipes
     const db = await Connection.open(mongoUri, 'serve');
-    const user = await db.collection(USERS).findOne({username: req.session.username});
+    const user = await db.collection(USERS).findOne({
+        username: req.session.username
+    });
+    const savedRecipeIDs = user.savedRecipes || [];
     const savedRecipes = await db.collection('recipes').find({
-    recipeID: { $in: user.savedRecipes }
+        recipeID: { $in: savedRecipeIDs }
     }).toArray();
-    
-    // consider case user has no saved recipes
-    return res.render('recipes.ejs',{
-                        recipes: savedRecipes,
-                        savedRecipes: savedRecipes || []
-                    }
-    )
+
+    return res.render('recipes.ejs', {
+        recipes: savedRecipes,          
+        savedRecipes: savedRecipeIDs    
+    });
 });
 
-// user saves or unsaves recipes 
+/**
+ * POST /save-recipe
+ * Toggles a recipe in the user's savedRecipes list.
+ * - If already saved → remove
+ * - If not saved → add
+ */
 app.post('/save-recipe', requiresLogin, async (req, res) => {
     const recipeID = parseInt(req.body.recipeID);
     const db = await Connection.open(mongoUri, 'serve');
