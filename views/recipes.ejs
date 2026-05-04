@@ -89,7 +89,7 @@
 </div>
 
 <div class="card-container">
-    <% recipes.slice(0,50).forEach(recipe => { %>
+    <% recipes.forEach(recipe => { %>
 
         <div class="recipeCard">
             <a href="/recipes/<%= recipe.recipeID %>" class="recipe-link">
@@ -104,7 +104,7 @@
                     <% } %>
                     
                     <p class="ingredient-preview">
-                        <% recipe.cleanedIngredients.slice(0,4).forEach(ingredient => { %>
+                        <%  (recipe.cleanedIngredients || recipe.ingredients || []).slice(0,4).forEach(ingredient => { %>
                             <span><%= ingredient %></span>
                         <% }) %>
                     </p>

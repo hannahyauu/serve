@@ -64,15 +64,6 @@ app.use(cookieSession({
 // ==========================================================================
 
 /**
- * Gets all recipes in serve DB
- * @returns list of all recipe documents
- */
-async function getAllRecipes() {
-    const db = await Connection.open(mongoUri, 'serve');
-    return db.collection(RECIPES).find({}).toArray();
-}
-
-/**
  * Checks if two ingredient strings roughly match.
  * Uses substring matching in both directions to allow flexibility
  * (e.g., "chicken breast" matches "chicken").
@@ -81,8 +72,67 @@ async function getAllRecipes() {
  * @returns {boolean}
  */
 function matchesIngredient(recipeIngredient, userIngredient) {
+    recipeIngredient = recipeIngredient.toLowerCase().trim();
+    userIngredient = userIngredient.toLowerCase().trim();
+
     return recipeIngredient.includes(userIngredient) ||
            userIngredient.includes(recipeIngredient);
+}
+
+/**
+ * Filters recipes according to the selected dietary
+ * and inventory-based filters.
+ *
+ * Supported filters include:
+ * - current inventory matching
+ * - vegan
+ * - vegetarian
+ * - gluten free
+ * - halal
+ *
+ * @param {Array<string>} selectedFilters
+ *        List of active filter names selected by the user.
+ *
+ * @param {Object} user
+ *        User document from MongoDB containing inventory,
+ *        saved recipes, etc.
+ *
+ * @param {Object} db
+ *        MongoDB database connection object.
+ *
+ * @returns {Array<Object>}
+ *          Array of recipe documents that satisfy all
+ *          selected filters.
+ */
+async function checkFilters(selectedFilters, user, db) {
+
+    let filteredRecipes = await db.collection(RECIPES)
+        .find({})
+        .toArray();
+
+    if (selectedFilters.includes("currInventory")) {
+        filteredRecipes = await recipesByInventory(
+            user.inventory || []
+        );
+    }
+
+    if (selectedFilters.includes("vegan")) {
+        filteredRecipes = filteredRecipes.filter(isVegan);
+    }
+
+    if (selectedFilters.includes("vegetarian")) {
+        filteredRecipes = filteredRecipes.filter(isVegetarian);
+    }
+
+    if (selectedFilters.includes("glutenFree")) {
+        filteredRecipes = filteredRecipes.filter(isGlutenFree);
+    }
+
+    if (selectedFilters.includes("halal")) {
+        filteredRecipes = filteredRecipes.filter(isHalal);
+    }
+
+    return filteredRecipes;
 }
 
 /**
@@ -95,14 +145,15 @@ function matchesIngredient(recipeIngredient, userIngredient) {
  */
 async function recipesByInventory(userInv) {
     const userInventory = userInv.map(item => item.itemName);
+
     const db = await Connection.open(mongoUri, 'serve');
 
     const recipes = await db.collection(RECIPES)
     .find({
         title: { $ne: null },
-        cleanedIngredients: { $ne: [''] }
+        cleanedIngredients: { $exists: true, $not: { $size: 0 } }
     })
-    .limit(100)
+    // .limit(100)
     .toArray();
     
     const filteredRecipes = recipes.filter(recipe => {
@@ -119,29 +170,11 @@ async function recipesByInventory(userInv) {
         ).length;
 
         // user has at least 1/4 of required ingredients
-        return (matchCount / ingredients.length) >= 0.25;
+        return (matchCount / ingredients.length) >= 0.80;
     });
     return filteredRecipes;
 }
 
-/**
- * Retrieves the list of ingredient names in a user's inventory.
- * @param {string} username
- * @returns {Array<string>} list of ingredient names
- */
-async function getCurrentInventory(username) {
-    // find user in db 
-    const db = await Connection.open(mongoUri, 'serve');
-    const user = await db.collection(USERS).findOne({username: username});
-    const userInventory = user.inventory;
-    
-    // add ingredients in users db to list for output
-    let userIngredients = [];
-    if (!user || !user.inventory) return []; // if user or inventory don't exist, return empty list
-    userIngredients = userInventory.map((x) => x.itemName);
-    
-    return user ? userIngredients : []; // return empty list if inventory is empty
-}
 
 /**
  * Middleware for Express endpoints to require user to be logged in
@@ -247,33 +280,38 @@ app.get('/', (req, res) => {
  */
 app.get('/recipes/', requiresLogin, async (req, res) => {
     const searchInput = req.query.searchInput;
-    const username = req.session.username;
     const filters = req.query.filters;
     let selectedFilters = [];
+
+    // if user has selected any filters
+    if (filters) {
+        selectedFilters = Array.isArray(filters)
+            ? filters
+            : [filters];
+    }
 
     const db = await Connection.open(mongoUri, 'serve');
 
     const user = await db.collection(USERS).findOne({
-        username: username
+        username: req.session.username
     });
 
-    let filteredRecipes = await getAllRecipes();
-    filteredRecipes = filteredRecipes.sort(() => Math.random() - 0.5);
+    // check for filters
+    let filteredRecipes =
+        await checkFilters(selectedFilters, user, db);
 
-    // if user selected any filters
-    if (filters) {
-        selectedFilters = Array.isArray(filters) ? filters : [filters];
-    }
-
-    // if someone searches something, filter recipe list
+    // check for search input AFTER filters
     if (searchInput) {
-        // grab search input 
+
         const search = searchInput.toLowerCase();
 
         filteredRecipes = filteredRecipes.filter(recipe => {
-            const title = (recipe.title || '').toLowerCase();
 
-            const ingredients = recipe.cleanedIngredients || [];
+            const title =
+                (recipe.title || '').toLowerCase();
+
+            const ingredients =
+                recipe.cleanedIngredients || [];
 
             return ingredients.some(ingredient =>
                 ingredient.toLowerCase().includes(search)
@@ -281,27 +319,12 @@ app.get('/recipes/', requiresLogin, async (req, res) => {
         });
     }
 
-        if (selectedFilters.includes("currInventory")) {
-            filteredRecipes = await recipesByInventory(user.inventory || []);
-        }
+    // randomize final results
+    filteredRecipes =
+        filteredRecipes.sort(() => Math.random() - 0.5);
 
-        if (selectedFilters.includes("vegan")) {
-            filteredRecipes = filteredRecipes.filter(isVegan);
-        }
-
-        if (selectedFilters.includes("vegetarian")) {
-            filteredRecipes = filteredRecipes.filter(isVegetarian);
-        }
-
-        if (selectedFilters.includes("glutenFree")) {
-            filteredRecipes = filteredRecipes.filter(isGlutenFree);
-        }
-
-        if (selectedFilters.includes("halal")) {
-            filteredRecipes = filteredRecipes.filter(isHalal);
-        }
-
-    return res.render('recipes.ejs', { recipes: filteredRecipes,
+    return res.render('recipes.ejs', {
+        recipes: filteredRecipes.slice(0, 150),
         savedRecipes: user.savedRecipes || []
     });
 });
