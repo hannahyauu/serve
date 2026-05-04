@@ -258,7 +258,6 @@ app.get('/recipes/', requiresLogin, async (req, res) => {
         username: username
     });
 
-    // let filteredRecipes = await recipesByInventory(user.inventory || []);
     let filteredRecipes = await getAllRecipes();
     filteredRecipes = filteredRecipes.sort(() => Math.random() - 0.5);
 
@@ -288,7 +287,6 @@ app.get('/recipes/', requiresLogin, async (req, res) => {
         }
 
         if (selectedFilters.includes("vegan")) {
-            // let recipes = getAllRecipes();
             filteredRecipes = filteredRecipes.filter(isVegan);
         }
 
@@ -304,12 +302,6 @@ app.get('/recipes/', requiresLogin, async (req, res) => {
             filteredRecipes = filteredRecipes.filter(isHalal);
         }
 
-    // grab user's username to retrieve saved recipes and pass to recipes page
-    // this will render red / grey hearts 
-    // const db = await Connection.open(mongoUri, 'serve');
-    // const user = await db.collection(USERS).findOne({ username: username });
-
-    // console.log('filteredRecipes', filteredRecipes[0]);
     return res.render('recipes.ejs', { recipes: filteredRecipes,
         savedRecipes: user.savedRecipes || []
     });

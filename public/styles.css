@@ -102,12 +102,6 @@ body {
     margin: 22px;
 }
 
-.recipe-text {
-    font-size: 20px;
-    padding: 20px;
-    border: 20px;
-}
-
 .search-container {
     padding: 20px;
     display: flex;
