@@ -21,19 +21,20 @@
 <%- include ("../partials/flashing.ejs") %>
 
 <!-- render recipe title, ingredients, and complete instructions -->
-<div class="recipe-text" style = "color: #11153f; text-shadow: 15em;">
+<div class="recipe-text">
     <h1><%= recipe.title %></h1>
         <% if (recipe.recipeID <= 13500) { %>
             <img src = "/data/recipe-images/recipe-imgfiles/<%= recipe.imageName %>.jpg" 
-                 alt="Image of <%= recipe.title %>" width="300">
+                 alt="Image of <%= recipe.title %>">
         <% } else { %>
-            <img src = "/<%= recipe.imageName %>" alt="Image of <%= recipe.title %>" width="300">
+            <img src = "/<%= recipe.imageName %>" alt="Image of <%= recipe.title %>" >
         <% } %>
-    <p><strong>Ingredients:</strong></p style="font-size: 20px;">
+    <p><strong>Ingredients:</strong></p>
     <ul> <% recipe.cleanedIngredients.forEach(ingredient =>{ %>
         <li><%= ingredient %></li>
         <% }) %> 
     </ul>
+    <p><strong>Directions:</strong></p>
     <p> <%= recipe.instructions %> </p>
 </div>
 

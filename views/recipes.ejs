@@ -24,16 +24,19 @@
 
 <!-- search bar and add recipe button -->
 <div class="search-container">
-    <form method="get" action="/recipes/" > 
-        <label for="recipe-search" class="sr-only">Search recipes</label>
-    <input type="search" 
-       id="recipe-search" 
-       name="searchInput" 
-       placeholder="search for a recipe..." 
+    <form method="get" action="/recipes/">
+        <input type="search" 
+        id="recipe-search" 
+        name="searchInput" 
+        placeholder="search for a recipe..." 
         style="color: white; font-size: 20px; padding: 5px;" />
     <button type="button" id="filter-toggle">filter</button>
 
         <div id="filter-menu" class="filter-menu hidden">
+            <label>
+                <input type="checkbox" name="filters" value="currInventory">
+                With ingredients in inventory
+            </label>
             <label>
                 <input type="checkbox" name="filters" value="vegan">
                 Vegan
@@ -113,8 +116,9 @@
             <form action="/save-recipe" method="POST" class="heart-form">
                 <input type="hidden" name="recipeID" value="<%= recipe.recipeID %>">
                 <button 
-                    type="submit" 
-                    class="heart-btn <%= (savedRecipes || []).map(Number).includes(String(recipe.recipeID)) ? 'likedHeart' : 'unlikedHeart' %>"
+                    type="button" 
+                    class="heart-btn <%= (savedRecipes || []).includes(recipe.recipeID) ? 'likedHeart' : 'unlikedHeart' %>"
+                    data-recipe-id="<%= recipe.recipeID %>"
                 >
                     ♥
                 </button>
@@ -125,11 +129,27 @@
 </div>
 
 <script>
-// if click on heart button, turn to red for saved, vice versa.
-document.querySelectorAll('.heart-btn').forEach(button => {
-    button.addEventListener('click', function () {
-        this.classList.toggle('likedHeart');
-        this.classList.toggle('unlikedHeart');
+
+$(".heart-btn").on("click", function () {
+
+    const button = $(this);
+    console.log(button);
+    const recipeID = button.data("recipe-id");
+
+    $.post("/save-recipe/" + recipeID).then(function (resp) {
+
+        if (resp.error) {
+            alert(resp.error);
+            return;
+        }
+
+        if (resp.saved) {
+            button.removeClass("unlikedHeart");
+            button.addClass("likedHeart");
+        } else {
+            button.removeClass("likedHeart");
+            button.addClass("unlikedHeart");
+        }
     });
 });
 

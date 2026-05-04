@@ -248,7 +248,6 @@ app.get('/', (req, res) => {
  */
 app.get('/recipes/', requiresLogin, async (req, res) => {
     const searchInput = req.query.searchInput;
-    // const recipes = await getAllRecipes();
     const username = req.session.username;
     const filters = req.query.filters;
     let selectedFilters = [];
@@ -267,8 +266,6 @@ app.get('/recipes/', requiresLogin, async (req, res) => {
     if (filters) {
         selectedFilters = Array.isArray(filters) ? filters : [filters];
     }
-
-    // let filteredRecipes = await recipesByInventory(username);
 
     // if someone searches something, filter recipe list
     if (searchInput) {
@@ -362,29 +359,49 @@ app.get('/created', requiresLogin, async (req, res) => {
 });
 
 /**
- * POST /save-recipe
+ * POST /save-recipe/:recipeID
  * Toggles a recipe in the user's savedRecipes list.
  * - If already saved → remove
  * - If not saved → add
  */
-app.post('/save-recipe', requiresLogin, async (req, res) => {
-    const recipeID = parseInt(req.body.recipeID);
+app.post('/save-recipe/:recipeID', requiresLogin, async (req, res) => {
+
+    const recipeID = Number(req.params.recipeID);
+
     const db = await Connection.open(mongoUri, 'serve');
-    const user = await db.collection(USERS).findOne({ username: req.session.username });
-    
-    // if user unsaving 
-    if (user.savedRecipes.includes(recipeID)) {
-        await db.collection('users').updateOne(
+    const users = db.collection('users');
+
+    const user = await users.findOne({
+        username: req.session.username
+    });
+
+    const alreadySaved =
+        (user.savedRecipes || []).includes(recipeID);
+
+    if (alreadySaved) {
+
+        await users.updateOne(
             { username: req.session.username },
             { $pull: { savedRecipes: recipeID } }
         );
-    } else { // if user saving
-        await db.collection('users').updateOne(
+
+        return res.json({
+            error: false,
+            saved: false
+        });
+
+    } else {
+
+        await users.updateOne(
             { username: req.session.username },
             { $addToSet: { savedRecipes: recipeID } }
         );
+
+        return res.json({
+            error: false,
+            saved: true
+        });
     }
-    res.redirect('back'); // might also make an ajax version for alpha
 });
 
 // loads a specific recipe after being clicked on

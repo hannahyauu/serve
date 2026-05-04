@@ -572,3 +572,77 @@ label {
     white-space: nowrap;
     border: 0;
 }
+
+.recipe-text {
+    padding: 20px 40px 60px 40px;
+
+    color: #11153f;
+
+    font-family: "Lato", sans-serif;
+}
+
+.recipe-text h1 {
+    color: #303957;
+    display: inline-block;
+    font-family: 'Lato', sans-serif;
+    font-size: 30px;
+    font-weight: 900;
+    color: rgb(30, 26, 104);
+    text-decoration: none;
+    background-color: #ffffff;
+    padding: 12px 28px;
+    border-radius: 14px;
+    letter-spacing: 2px;
+}
+
+.recipe-text img {
+    max-width: 750px;
+    height: 320px;
+    border-radius: 20px;
+    object-fit: cover;
+    display: block;
+    margin-bottom: 40px;
+}
+
+.recipe-text p:first-of-type {
+    font-size: 22px;
+    font-weight: 900;
+    color: #303957;
+}
+
+.recipe-text ul {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    padding: 0;
+    margin-bottom: 50px;
+}
+
+.recipe-text li {
+    padding: 12px 24px;
+
+    background-color: #e6f298;
+
+    border-radius: 999px;
+
+    color: #303957;
+
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.recipe-text p:last-of-type {
+    display: inline-block;
+    font-size: 19px;
+    color: #303957;
+    background-color: #ffffff;
+    padding: 12px;
+    border-radius: 14px;
+    white-space: pre-line;
+    line-height: 2;
+}
+
+.page {
+    background-color: #e4e8ff;
+} 
