@@ -21,7 +21,6 @@ const ROUNDS = 10;
 // our modules loaded from cwd
 const { Connection } = require('./connection');
 const cs304 = require('./cs304');
-const { filter } = require('bluebird');
 
 // create and configure the app
 const app = express();
@@ -566,6 +565,27 @@ app.get('/inventory/:location', requiresLogin, async (req, res) => {
             }
         });
     }
+
+    specificInv.forEach(ingredient => {
+
+                                        if (!ingredient.imgFile) {
+                                            ingredient.validImgFile = 'default.png';
+                                            return;
+                                        }
+
+                                        const imgPath = path.join(
+                                            __dirname,
+                                            'data',
+                                            'ingredient-images',
+                                            ingredient.imgFile
+                                        );
+
+                                        ingredient.validImgFile =
+                                            fs.existsSync(imgPath)
+                                                ? ingredient.imgFile
+                                                : 'default.png';
+                                    });
+
     return res.render('inventory.ejs', {locations: storageLocations, 
                                         location: location, 
                                         ingredients: specificInv, 
@@ -581,7 +601,19 @@ app.post('/add-item', requiresLogin, async (req, res) => {
     
     // get item info from form
     const itemName = req.body.itemName;
-    const imgFile = itemName[0].toUpperCase() + itemName.slice(1) + '.png';
+    let imgFile = itemName[0].toUpperCase() + itemName.slice(1) + '.png';
+
+    const imgPath = path.join(
+                                __dirname,
+                                'data',
+                                'ingredient-images',
+                                imgFile
+                            );
+
+    if (!fs.existsSync(imgPath)) {
+        imgFile = 'default.png';
+    }
+
     const location = req.body.chosenLocation;
     const expiration = req.body.expiration;
 

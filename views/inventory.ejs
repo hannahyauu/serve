@@ -50,7 +50,7 @@
         <% ingredients.forEach( (ingredient) => { %>
             <% if (ingredient.location === location) { %>
                 <span class="ingredient-container">
-                    <img src="/data/ingredient-images/<%= ingredient.imgFile %>" 
+                    <img src="/data/ingredient-images/<%= ingredient.validImgFile %>" 
                     alt="Image of <%= ingredient.itemName %>">
                     <h2><%= ingredient.itemName %></h2>
                     <p><b>expires:</b> <%= ingredient.expiration %></p>
