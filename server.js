@@ -485,10 +485,24 @@ let storage = multer.diskStorage({
 // set up file size limit and assign storage
 let upload = multer({ storage: storage,
                       // file size in bytes
-                      limits: {fileSize: 1_000_000 }});
+                      limits: {fileSize: 2_000_000 }});
 
-// starting number for recipeIDs
-let COUNTER = 13500; // DON'T TOUCH THIS LOL
+/**
+ * Increments counter for the specified collection
+ * @param {*} counters name of database that contains counter documents
+ * @param {*} collectionName name of collection to increment
+ * @returns a promise for the updated count
+ */
+async function incrCounter(counters, collectionName) {
+    // this will update the document and return the document after the update
+    const db = await Connection.open(mongoUri, 'serve');
+    const counterdb = db.collection(counters);
+
+    let result = await counterdb.findOneAndUpdate({collection: collectionName},
+                                                  {$inc: {counter: 1}}, 
+                                                  {returnDocument: "after"});
+    return result.counter;
+}
 
 /**
  * POST /add-recipe
@@ -519,10 +533,7 @@ app.post('/add-recipe', requiresLogin, upload.single('image'), async (req, res) 
                       path: '/uploads/'+req.file.filename});
     console.log('insertOne result', result);
 
-    // ID for new recipe is the number of documents in recipes collection +1
-    let recipeID = await db.collection(RECIPES).countDocuments();
-    recipeID++;
-    console.log(recipeID);
+    let recipeID = await incrCounter('counters', 'recipes'); // use helper to increment counter
 
     // upsert recipe into recipe collection
     let recipe = await recipes.insertOne( { cleanedIngredients: ingredients,
