@@ -184,8 +184,33 @@ async function recipesByInventory(userInv) {
  */
 function requiresLogin(req, res, next) {
     if (!req.session.loggedIn) {
-        req.flash('error', 'this page requires you to be logged in.');
+        req.flash('error', 'This page requires you to be logged in.');
         return res.redirect("/");
+    } else { next() };
+};
+
+/**
+ * Middleware for Express endpoints to require user to have editing access
+ * @param req request object
+ * @param res response object
+ * @param next next action to perform
+ */
+async function requiresEditAccess(req, res, next) {
+    let username = req.session.username;
+    let recipeID = req.params.recipeID;
+    
+    const db = await Connection.open(mongoUri, 'serve');
+    const user = await db.collection(USERS).findOne({ username: username });
+
+    console.log('createdRecipes', user?.createdRecipes); // check what's stored
+    console.log('recipeID', parseInt(recipeID), typeof parseInt(recipeID)); // check type
+
+    let recipeCheck = user?.createdRecipes?.includes(parseInt(recipeID)) ?? false;
+    console.log('recipeCheck', recipeCheck); // should be true
+
+    if (!recipeCheck) {
+        req.flash('error', 'This page requires editing access.');
+        return res.redirect('/created');
     } else { next() };
 };
 
@@ -418,8 +443,11 @@ app.post('/save-recipe/:recipeID', requiresLogin, async (req, res) => {
     }
 });
 
-// loads a specific recipe after being clicked on
-app.get('/recipes/:recipeID', async (req, res) => {
+/**
+ * GET /recipes/:recipeID
+ * loads a specific recipe after being clicked on
+ */
+app.get('/recipes/:recipeID', requiresLogin, async (req, res) => {
     const recipeID = req.params.recipeID;
     const db = await Connection.open(mongoUri, 'serve');
     const recipe = await db.collection(RECIPES).findOne({recipeID: parseInt(recipeID)});
@@ -429,9 +457,16 @@ app.get('/recipes/:recipeID', async (req, res) => {
         req.flash('error', "There is no recipe with that recipe ID!");
     }
 
+    // if recipe was created by user, send to EJS to show edit button
+    let userCreated = false;
+    if (req.session.loggedIn) {
+        let username = req.session.username;
+        const user = await db.collection(USERS).findOne({ username });
+        userCreated = user?.createdRecipes?.includes(parseInt(recipeID)) ?? false;
+    }
+
     return res.render('recipeSpecific.ejs',
-                        {recipeID,
-                            recipe });
+                        { recipeID, recipe, userCreated: userCreated });
 });
 
 // ==========================================================================
@@ -485,10 +520,24 @@ let storage = multer.diskStorage({
 // set up file size limit and assign storage
 let upload = multer({ storage: storage,
                       // file size in bytes
-                      limits: {fileSize: 1_000_000 }});
+                      limits: {fileSize: 2_000_000 }});
 
-// starting number for recipeIDs
-let COUNTER = 13500; // DON'T TOUCH THIS LOL
+/**
+ * Increments counter for the specified collection
+ * @param {*} counters name of database that contains counter documents
+ * @param {*} collectionName name of collection to increment
+ * @returns a promise for the updated count
+ */
+async function incrCounter(counters, collectionName) {
+    // this will update the document and return the document after the update
+    const db = await Connection.open(mongoUri, 'serve');
+    const counterdb = db.collection(counters);
+
+    let result = await counterdb.findOneAndUpdate({collection: collectionName},
+                                                  {$inc: {counter: 1}}, 
+                                                  {returnDocument: "after"});
+    return result.counter;
+}
 
 /**
  * POST /add-recipe
@@ -519,10 +568,7 @@ app.post('/add-recipe', requiresLogin, upload.single('image'), async (req, res) 
                       path: '/uploads/'+req.file.filename});
     console.log('insertOne result', result);
 
-    // ID for new recipe is the number of documents in recipes collection +1
-    let recipeID = await db.collection(RECIPES).countDocuments();
-    recipeID++;
-    console.log(recipeID);
+    let recipeID = await incrCounter('counters', 'recipes'); // use helper to increment counter
 
     // upsert recipe into recipe collection
     let recipe = await recipes.insertOne( { cleanedIngredients: ingredients,
@@ -540,6 +586,85 @@ app.post('/add-recipe', requiresLogin, upload.single('image'), async (req, res) 
     // confirmation message + redirect to the new recipe page
     req.flash('info', 'Recipe added!');
     return res.redirect(`/recipes/${recipeID}`);
+});
+
+/**
+ * GET /edit/:recipeID
+ * gets form to edit a created recipe
+ * requires that user has edit access
+ */
+app.get('/edit/:recipeID', requiresLogin, requiresEditAccess, async (req, res) => { 
+    const username = req.session.username;
+    const recipeID = parseInt(req.params.recipeID);
+    
+    // access database
+    const db = await Connection.open(mongoUri, 'serve');
+    const recipes = db.collection(RECIPES);
+    const recipe = await recipes.findOne({recipeID: recipeID});
+    
+    res.render('editRecipe.ejs', { recipe, recipeID } );
+});
+
+/**
+ * POST /update-recipe
+ * form takes recipe name, image file, ingredients list, and instructions
+ * updates recipe in recipes collection
+ */
+app.post('/update-recipe/:recipeID', requiresLogin, requiresEditAccess, upload.single('image'), async (req, res) => {
+    const username = req.session.username;
+    const recipeID = parseInt(req.params.recipeID);
+
+    // log info
+    console.log('file', req.file);
+    console.log('uploaded data', req.body);
+    
+    // get recipe info from form
+    const recipeName = req.body.recipeName;
+    let imgFilePath = req.file ? req.file.path : req.body.existingImage;
+    const ingredients = req.body.ingredients.split(',').map(s => s.trim()); // split on commas
+    const instructions = req.body.instructions;
+
+    // access database
+    const db = await Connection.open(mongoUri, 'serve');
+    const users = db.collection(USERS);
+    const recipes = db.collection(RECIPES);
+
+    if (req.file) {
+        const result = await db.collection(UPLOADS)
+            .insertOne({title: recipeName.split(' ').join(''),
+                        owner: username,
+                        path: '/uploads/'+req.file.filename});
+        console.log('insertOne image result', result);
+    }
+
+    // update recipe in recipe collection
+    let recipe = await recipes.updateOne( {recipeID: recipeID },
+                                  { $set: { cleanedIngredients: ingredients,
+                                            imageName: imgFilePath,
+                                            ingredients: ingredients,
+                                            instructions: instructions, 
+                                            title: recipeName }} );
+
+    // confirmation message + redirect to the new recipe page
+    req.flash('info', 'Recipe updated!');
+    return res.redirect(`/recipes/${recipeID}`);
+});
+
+/**
+ * POST /delete-recipe
+ * deletes a recipe from the database
+ */
+app.post('/delete-recipe/:recipeID', requiresLogin, requiresEditAccess, async (req, res) => {
+    const recipeID = parseInt(req.params.recipeID);
+
+    const db = await Connection.open(mongoUri, 'serve');
+    const recipes = await db.collection(RECIPES);
+    
+    const result = await recipes.deleteOne({recipeID: recipeID});
+    console.log('delete result', result); // should show deletedCount: 1
+
+    req.flash('info', `Deleted recipe ${recipeID}.`);
+    return res.redirect('/created');
 });
 
 // ==========================================================================
@@ -742,7 +867,7 @@ app.post('/signup', async (req, res) => {
     
     } catch (error) {
         req.flash('error', `Form submission error: ${error}`);
-        return res.redirect('/')
+        return res.redirect('/recipes')
     }
 });
 

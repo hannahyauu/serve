@@ -63,7 +63,7 @@ body {
 
 .view-more {
     margin-top: 15px;
-    color: #71805a;
+    color: #476c3c;
     font-weight: bold;
 }
 
@@ -159,7 +159,7 @@ body {
 }
 
 .shelf {
-    background-color: #DBE2F3;
+    background-color: #f1f3ff;
     font-family: 'Lato';
     border-radius: 20px;
     align-items: center;
@@ -190,6 +190,7 @@ body {
     color: #30375f;
     font-size: 24px;
     margin: 10px 0;
+    display: inline;
 }
 
 .ingredient-container p {
@@ -199,17 +200,21 @@ body {
 }
 
 .delete-btn {
+    font-family: 'Lato';
     margin-top: 12px;
     border: none;
-    background: #709466;
+    background: #476c3c;
     color: #ffffff;
     padding: 8px 16px;
     border-radius: 18px;
     cursor: pointer;
+    text-decoration: none;
+    font-weight: regular;
 }
 
 .delete-btn:hover {
     background: #c8cf91;
+    color: #303957;
 }
 
 .navbar {
@@ -306,6 +311,7 @@ body {
     background-color: #dce2ea;
     border-radius: 50%;
     display: inline-block;
+    font-size: 0;
 }
 
 .add-button {
@@ -362,32 +368,40 @@ body {
     height: 85%;
 }
 
-#ingredient-form, #new-recipe {
+#ingredient-form, #new-recipe, #edit-recipe {
     display: flex;
     flex-direction: column;
     gap: 15px;
 }
 
-#ingredient-form h1, #new-recipe h1 {
+#delete-recipe {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-top: 15px;
+}
+
+#ingredient-form h1, #new-recipe h1, #edit-recipe h1 {
     color: #30375f;
     text-align: center;
     margin-top: 0;
+    margin-bottom: 0;
 }
 
-#ingredient-form label, #new-recipe label {
+#ingredient-form label, #new-recipe label, #edit-recipe label {
     display: flex;
     flex-direction: column;
     gap: 5px;
     color: #30375f;
 }
 
-#ingredient-form input, #new-recipe input {
+#ingredient-form input, #new-recipe input, #edit-recipe input {
     padding: 10px;
     border-radius: 15px;
     border: 1px solid #ccc;
 }
 
-#ingredient-form button, #new-recipe button {
+#ingredient-form button, #new-recipe button, #edit-recipe button, #delete-recipe button {
     border: none;
     padding: 10px;
     border-radius: 18px;
@@ -641,3 +655,26 @@ label {
 .page {
     background-color: #e4e8ff;
 } 
+
+.edit-btn {
+    font-family: 'Lato';
+    margin-top: 12px;
+    margin-bottom: 12px;
+    border: none;
+    background: #476c3c;
+    color: #ffffff;
+    padding: 8px 16px;
+    border-radius: 18px;
+    cursor: pointer;
+    text-decoration: none;
+    font-weight: regular;
+}
+
+.edit-btn:hover {
+    background: #c8cf91;
+    color: #303957;
+}
+
+.invisible-text {
+    font-size: 0px;
+}
