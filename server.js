@@ -203,7 +203,7 @@ function isVegan(recipe) {
         "fish", "salmon", "ribs", "spam",
     ];
 
-    return !recipe.cleanedIngredients.some(ingredient =>
+    return !(recipe.cleanedIngredients || []).some(ingredient =>
         nonVegan.some(bad => ingredient.toLowerCase().includes(bad))
     );
 }
@@ -220,7 +220,7 @@ function isVegetarian(recipe) {
         "fish", "salmon", "ribs", "spam",
     ];
 
-    return !recipe.cleanedIngredients.some(ingredient =>
+    return !(recipe.cleanedIngredients || []).some(ingredient =>
         nonVegetarian.some(bad => ingredient.toLowerCase().includes(bad))
     );
 }
@@ -234,7 +234,7 @@ function isGlutenFree(recipe) {
         "flour", "wheat", "bread", "pasta", "noodle", "barley"
     ];
 
-    return !recipe.cleanedIngredients.some(ingredient =>
+    return !(recipe.cleanedIngredients || []).some(ingredient =>
         gluten.some(bad => ingredient.toLowerCase().includes(bad))
     );
 }
@@ -250,7 +250,7 @@ function isHalal(recipe) {
         "lard"
     ];
 
-    return !recipe.cleanedIngredients.some(ingredient =>
+    return !(recipe.cleanedIngredients || []).some(ingredient =>
         nonHalal.some(bad =>
             ingredient.toLowerCase().includes(bad)
         )
