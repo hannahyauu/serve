@@ -23,14 +23,20 @@
 <!-- render recipe title, ingredients, and complete instructions -->
 <div class="recipe-text">
     <h1><%= recipe.title %></h1>
-        <% if (recipe.recipeID <= 13500) { %>
-            <img src = "/data/recipe-images/recipe-imgfiles/<%= recipe.imageName %>.jpg" 
-                 alt="Image of <%= recipe.title %>">
-        <% } else { %>
-            <img src = "/<%= recipe.imageName %>" alt="Image of <%= recipe.title %>" >
-        <% } %>
+
+    <% if (userCreated) { %>
+        <div style="font-size: 13px; margin-bottom: 20px;"><a href="/edit/<%= recipe.recipeID %>" class="edit-btn">edit recipe</a></div>
+    <% } %>
+
+    <% if (recipe.recipeID <= 13500) { %>
+        <img src = "/data/recipe-images/recipe-imgfiles/<%= recipe.imageName %>.jpg" 
+                alt="Image of <%= recipe.title %>">
+    <% } else { %>
+        <img src = "/<%= recipe.imageName %>" alt="Image of <%= recipe.title %>" >
+    <% } %>
+    
     <p><strong>Ingredients:</strong></p>
-    <ul> <% recipe.cleanedIngredients.forEach(ingredient =>{ %>
+    <ul> <% recipe.cleanedIngredients.forEach(ingredient => { %>
         <li><%= ingredient %></li>
         <% }) %> 
     </ul>

@@ -184,8 +184,33 @@ async function recipesByInventory(userInv) {
  */
 function requiresLogin(req, res, next) {
     if (!req.session.loggedIn) {
-        req.flash('error', 'this page requires you to be logged in.');
+        req.flash('error', 'This page requires you to be logged in.');
         return res.redirect("/");
+    } else { next() };
+};
+
+/**
+ * Middleware for Express endpoints to require user to have editing access
+ * @param req request object
+ * @param res response object
+ * @param next next action to perform
+ */
+async function requiresEditAccess(req, res, next) {
+    let username = req.session.username;
+    let recipeID = req.params.recipeID;
+    
+    const db = await Connection.open(mongoUri, 'serve');
+    const user = await db.collection(USERS).findOne({ username: username });
+
+    console.log('createdRecipes', user?.createdRecipes); // check what's stored
+    console.log('recipeID', parseInt(recipeID), typeof parseInt(recipeID)); // check type
+
+    let recipeCheck = user?.createdRecipes?.includes(parseInt(recipeID)) ?? false;
+    console.log('recipeCheck', recipeCheck); // should be true
+
+    if (!recipeCheck) {
+        req.flash('error', 'This page requires editing access.');
+        return res.redirect('/created');
     } else { next() };
 };
 
@@ -429,9 +454,16 @@ app.get('/recipes/:recipeID', async (req, res) => {
         req.flash('error', "There is no recipe with that recipe ID!");
     }
 
+    // if recipe was created by user, send to EJS to show edit button
+    let userCreated = false;
+    if (req.session.loggedIn) {
+        let username = req.session.username;
+        const user = await db.collection(USERS).findOne({ username });
+        userCreated = user?.createdRecipes?.includes(parseInt(recipeID)) ?? false;
+    }
+
     return res.render('recipeSpecific.ejs',
-                        {recipeID,
-                            recipe });
+                        { recipeID, recipe, userCreated: userCreated });
 });
 
 // ==========================================================================
@@ -551,6 +583,84 @@ app.post('/add-recipe', requiresLogin, upload.single('image'), async (req, res) 
     // confirmation message + redirect to the new recipe page
     req.flash('info', 'Recipe added!');
     return res.redirect(`/recipes/${recipeID}`);
+});
+
+/**
+ * GET /edit/:recipeID
+ * gets form to edit a created recipe
+ */
+app.get('/edit/:recipeID', requiresLogin, requiresEditAccess, async (req, res) => { 
+    const username = req.session.username;
+    const recipeID = parseInt(req.params.recipeID);
+    
+    // access database
+    const db = await Connection.open(mongoUri, 'serve');
+    const recipes = db.collection(RECIPES);
+    const recipe = await recipes.findOne({recipeID: recipeID});
+    
+    res.render('editRecipe.ejs', { recipe, recipeID } );
+});
+
+/**
+ * POST /update-recipe
+ * form takes recipe name, image file, ingredients list, and instructions
+ * updates recipe in recipes collection
+ */
+app.post('/update-recipe/:recipeID', requiresLogin, upload.single('image'), async (req, res) => {
+    const username = req.session.username;
+    const recipeID = parseInt(req.params.recipeID);
+
+    // log info
+    console.log('file', req.file);
+    console.log('uploaded data', req.body);
+    
+    // get recipe info from form
+    const recipeName = req.body.recipeName;
+    let imgFilePath = req.file ? req.file.path : req.body.existingImage;
+    const ingredients = req.body.ingredients.split(',').map(s => s.trim()); // split on commas
+    const instructions = req.body.instructions;
+
+    // access database
+    const db = await Connection.open(mongoUri, 'serve');
+    const users = db.collection(USERS);
+    const recipes = db.collection(RECIPES);
+
+    if (req.file) {
+        const result = await db.collection(UPLOADS)
+            .insertOne({title: recipeName.split(' ').join(''),
+                        owner: username,
+                        path: '/uploads/'+req.file.filename});
+        console.log('insertOne image result', result);
+    }
+
+    // update recipe in recipe collection
+    let recipe = await recipes.updateOne( {recipeID: recipeID },
+                                  { $set: { cleanedIngredients: ingredients,
+                                            imageName: imgFilePath,
+                                            ingredients: ingredients,
+                                            instructions: instructions, 
+                                            title: recipeName }} );
+
+    // confirmation message + redirect to the new recipe page
+    req.flash('info', 'Recipe updated!');
+    return res.redirect(`/recipes/${recipeID}`);
+});
+
+/**
+ * POST /delete-recipe
+ * deletes a recipe from the database
+ */
+app.post('/delete-recipe/:recipeID', requiresLogin, requiresEditAccess, async (req, res) => {
+    const recipeID = parseInt(req.params.recipeID);
+
+    const db = await Connection.open(mongoUri, 'serve');
+    const recipes = await db.collection(RECIPES);
+    
+    const result = await recipes.deleteOne({recipeID: recipeID});
+    console.log('delete result', result); // should show deletedCount: 1
+
+    req.flash('info', `Deleted recipe ${recipeID}.`);
+    return res.redirect('/created');
 });
 
 // ==========================================================================
@@ -753,7 +863,7 @@ app.post('/signup', async (req, res) => {
     
     } catch (error) {
         req.flash('error', `Form submission error: ${error}`);
-        return res.redirect('/')
+        return res.redirect('/recipes')
     }
 });
 
