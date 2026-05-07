@@ -443,8 +443,11 @@ app.post('/save-recipe/:recipeID', requiresLogin, async (req, res) => {
     }
 });
 
-// loads a specific recipe after being clicked on
-app.get('/recipes/:recipeID', async (req, res) => {
+/**
+ * GET /recipes/:recipeID
+ * loads a specific recipe after being clicked on
+ */
+app.get('/recipes/:recipeID', requiresLogin, async (req, res) => {
     const recipeID = req.params.recipeID;
     const db = await Connection.open(mongoUri, 'serve');
     const recipe = await db.collection(RECIPES).findOne({recipeID: parseInt(recipeID)});
@@ -588,6 +591,7 @@ app.post('/add-recipe', requiresLogin, upload.single('image'), async (req, res) 
 /**
  * GET /edit/:recipeID
  * gets form to edit a created recipe
+ * requires that user has edit access
  */
 app.get('/edit/:recipeID', requiresLogin, requiresEditAccess, async (req, res) => { 
     const username = req.session.username;
@@ -606,7 +610,7 @@ app.get('/edit/:recipeID', requiresLogin, requiresEditAccess, async (req, res) =
  * form takes recipe name, image file, ingredients list, and instructions
  * updates recipe in recipes collection
  */
-app.post('/update-recipe/:recipeID', requiresLogin, upload.single('image'), async (req, res) => {
+app.post('/update-recipe/:recipeID', requiresLogin, requiresEditAccess, upload.single('image'), async (req, res) => {
     const username = req.session.username;
     const recipeID = parseInt(req.params.recipeID);
 

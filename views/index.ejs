@@ -1,27 +1,24 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
+    <meta charset="UTF-8">
     <title>serve</title>
     <!-- load local stylesheet (css) -->
-    <link rel="stylesheet" href="/styles.css" />
+    <link rel="stylesheet" href="/styles.css">
     <!-- loading jquery -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
 </head>
-<body class="page" style="background-color: white";>
+<body class="page" style="background-color:white">
 
-<!-- navigation -->
-<!-- <%- include("../partials/navbar.ejs") %> -->
-
-<!-- error flashing -->
-<!-- <%- include ("../partials/flashing.ejs") %> -->
+<!-- error flashing for login messages -->
+<%- include ("../partials/flashing.ejs") %>
 
 <% if (!loggedIn) { %>
 
 <div class="container">
 
     <div class="image-section">
-        <img src="/data/serve.png" width="200px" alt="pixel art image of an isometric home">
+        <img src="/data/serve.png" width="200" alt="pixel art image of an isometric home">
     </div>
 
     <div class="text-section">

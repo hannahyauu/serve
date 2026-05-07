@@ -190,6 +190,7 @@ body {
     color: #30375f;
     font-size: 24px;
     margin: 10px 0;
+    display: inline;
 }
 
 .ingredient-container p {
@@ -672,4 +673,8 @@ label {
 .edit-btn:hover {
     background: #c8cf91;
     color: #303957;
+}
+
+.invisible-text {
+    font-size: 0px;
 }
